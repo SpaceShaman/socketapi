@@ -1,0 +1,23 @@
+[project]
+name = "socketapi"
+version = "0.1.0"
+description = "Lightweight WebSocket framework built on Starlette, featuring typed message handling with Pydantic and a fast channel manager for building reactive, real-time backends."
+license = "MIT"
+authors = [
+{ name = "SpaceShaman", email = "spaceshaman@tuta.io" }
+]
+readme = "README.md"
+homepage = "https://github.com/SpaceShaman/socketapi"
+documentation = "https://github.com/SpaceShaman/socketapi"
+repository = "https://github.com/SpaceShaman/socketapi"
+kwords = ["websocket", "realtime", "pydantic", "starlette", "channels", "async", "framework", "api"]
+classifiers = [
+  "Framework :: Pydantic",
+  "Framework :: Pydantic :: 2",
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"
