@@ -1,6 +1,6 @@
 [project]
 name = "socketapi"
-version = "0.1.0"
+version = "0.0.0"
 description = "Lightweight WebSocket framework built on Starlette, featuring typed message handling with Pydantic and a fast channel manager for building reactive, real-time backends."
 license = "MIT"
 authors = [
