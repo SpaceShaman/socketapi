@@ -67,7 +67,6 @@ class SocketAPI(Starlette):
             await websocket.send_json({"error": "Channel is required."})
             return
         if message_type == "subscribe":
-            # if websocket := await self.channel_manager.subscribe(channel, websocket)
             if subscripted_ws := await self.channel_manager.subscribe(
                 channel, websocket
             ):
