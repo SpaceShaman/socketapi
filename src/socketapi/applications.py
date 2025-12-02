@@ -107,7 +107,7 @@ class SocketAPI(Starlette):
                 data = await websocket.receive_json()
                 await self._handle_message(websocket, data)
         except WebSocketDisconnect:
-            pass
+            await self._socket_manager.unsubscribe_all(websocket)
 
     async def _handle_message(self, websocket: WebSocket, data: dict[str, str]) -> None:
         message_type = data.get("type")
