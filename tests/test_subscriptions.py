@@ -24,6 +24,7 @@ async def news() -> dict[str, str]:
 
 
 def test_subscribe_to_channel():
+    global chat_calls
     client = TestClient(app)
 
     assert "chat" in app.channel_manager.channels
@@ -40,19 +41,18 @@ def test_subscribe_to_channel():
             "channel": "chat",
             "data": {"message": "Welcome"},
         }
-    global chat_calls
     assert chat_calls == 1
     chat_calls = 0
 
 
 def test_subscribe_to_channel_without_default_response():
+    global news_calls
     client = TestClient(app)
 
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "news"})
         response = websocket.receive_json()
         assert response == {"type": "subscribed", "channel": "news"}
-    global news_calls
     assert news_calls == 0
 
 
@@ -66,6 +66,7 @@ def test_subscribe_to_nonexistent_channel():
 
 
 def test_subscribe_to_channel_and_receive_some_data():
+    global chat_calls
     client = TestClient(app)
 
     with client.websocket_connect("/") as websocket:
@@ -85,6 +86,24 @@ def test_subscribe_to_channel_and_receive_some_data():
             "channel": "chat",
             "data": {"message": "Test Message"},
         }
-    global chat_calls
     assert chat_calls == 2
     chat_calls = 0
+
+
+def test_subscribe_to_channel_without_default_response_and_receive_some_data():
+    global news_calls
+    client = TestClient(app)
+
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "news"})
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "news"}
+        asyncio.run(news())
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "news",
+            "data": {"headline": "Breaking News!"},
+        }
+    assert news_calls == 1
+    news_calls = 0
