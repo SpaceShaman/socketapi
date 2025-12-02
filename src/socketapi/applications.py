@@ -4,7 +4,6 @@ from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from .exceptions import InvalidMessageFormatError
 from .types import DecoratedCallable
 
 
@@ -50,9 +49,11 @@ class SocketAPI(Starlette):
     async def _handle_message(self, websocket: WebSocket, data: dict[str, str]) -> None:
         message_type = data.get("type")
         if not message_type:
-            raise InvalidMessageFormatError("Message type is required.")
+            await websocket.send_json({"error": "Message type is required."})
+            return
         channel = data.get("channel")
         if not channel:
-            raise InvalidMessageFormatError("Channel is required.")
+            await websocket.send_json({"error": "Channel is required."})
+            return
         if message_type == "subscribe":
             await self.subscription_manager.subscribe(channel, websocket)
