@@ -3,10 +3,22 @@ from socketapi.testclient import TestClient
 
 app = SocketAPI()
 
+chat_calls: int = 0
+news_calls: int = 0
+
 
 @app.channel("chat")
 async def chat() -> dict[str, str]:
+    global chat_calls
+    chat_calls += 1
     return {"message": "Welcome to the chat channel!"}
+
+
+@app.channel("news", default_response=False)
+async def news() -> dict[str, str]:
+    global news_calls
+    news_calls += 1
+    return {"headline": "Breaking News!"}
 
 
 def test_subscribe_to_channel():
@@ -26,6 +38,20 @@ def test_subscribe_to_channel():
             "channel": "chat",
             "data": {"message": "Welcome to the chat channel!"},
         }
+    global chat_calls
+    assert chat_calls == 1
+    chat_calls = 0
+
+
+def test_subscribe_to_channel_without_default_response():
+    client = TestClient(app)
+
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "news"})
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "news"}
+    global news_calls
+    assert news_calls == 0
 
 
 def test_subscribe_to_nonexistent_channel():

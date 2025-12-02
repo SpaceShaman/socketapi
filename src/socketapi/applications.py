@@ -1,12 +1,18 @@
 from functools import wraps
-from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
+from typing import Any, Awaitable, Callable, ParamSpec, Protocol, TypeVar, cast
 
 from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 P = ParamSpec("P")
-R = TypeVar("R")
+R = TypeVar("R", covariant=True)
+
+
+class ChannelHandler(Protocol[P, R]):
+    default_response: bool
+
+    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R: ...
 
 
 class ChannelManager:
@@ -28,23 +34,24 @@ class ChannelManager:
 class SocketAPI(Starlette):
     def __init__(self) -> None:
         self.channel_manager = ChannelManager()
-        self.handlers: dict[str, Callable[..., Any]] = {}
+        self.handlers: dict[str, ChannelHandler[Any, Any]] = {}
         routes = [WebSocketRoute("/", self._websocket_endpoint)]
         super().__init__(routes=routes)
 
     def channel(
-        self,
-        name: str,
-    ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-        def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        self, name: str, default_response: bool = True
+    ) -> Callable[[Callable[P, Awaitable[R]]], ChannelHandler[P, R]]:
+        def decorator(func: Callable[P, Awaitable[R]]) -> ChannelHandler[P, R]:
             @wraps(func)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 result = await func(*args, **kwargs)
                 return result
 
+            handler = cast(ChannelHandler[P, R], wrapper)
+            handler.default_response = default_response
             self.channel_manager.create_channel(name)
-            self.handlers[name] = wrapper
-            return wrapper
+            self.handlers[name] = handler
+            return handler
 
         return decorator
 
@@ -67,9 +74,12 @@ class SocketAPI(Starlette):
             await websocket.send_json({"error": "Channel is required."})
             return
         if message_type == "subscribe":
-            if subscripted_ws := await self.channel_manager.subscribe(
-                channel, websocket
-            ):
+            subscripted_ws = await self.channel_manager.subscribe(channel, websocket)
+            if not subscripted_ws:
+                return
+            if handler := self.handlers.get(channel):
+                if not handler.default_response:
+                    return
                 default_response = await self.handlers[channel]()
                 await self._send_data(subscripted_ws, channel, default_response)
 
