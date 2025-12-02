@@ -18,23 +18,25 @@ class SocketManager:
 
     async def subscribe(self, channel: str, websocket: WebSocket) -> None | WebSocket:
         if channel not in self.channels:
-            await websocket.send_json({"error": f"Channel '{channel}' not found."})
+            await self.error(websocket, f"Channel '{channel}' not found.")
             return None
         self.channels[channel].add(websocket)
-        await websocket.send_json({"type": "subscribed", "channel": channel})
+        await self.send(websocket, "subscribed", channel)
         await self.handlers[channel].send_initial_data(websocket)
         return websocket
 
     async def unsubscribe(self, channel: str, websocket: WebSocket) -> None:
         if channel in self.channels:
             self.channels[channel].discard(websocket)
+        await self.send(websocket, "unsubscribed", channel)
 
     async def send(
-        self, websocket: WebSocket, type: str, channel: str, data: Any
+        self, websocket: WebSocket, type: str, channel: str, data: Any | None = None
     ) -> None:
-        await self._send_json(
-            websocket, {"type": type, "channel": channel, "data": data}
-        )
+        payload = {"type": type, "channel": channel}
+        if data:
+            payload["data"] = data
+        await self._send_json(websocket, payload)
 
     async def error(self, websocket: WebSocket, message: str) -> None:
         await self._send_json(websocket, {"error": message})
@@ -43,7 +45,8 @@ class SocketManager:
         try:
             await websocket.send_json(data)
         except Exception:
-            await self.unsubscribe_all(websocket)
+            for sockets in list(self.channels.values()):
+                sockets.discard(websocket)
 
     async def unsubscribe_all(self, websocket: WebSocket) -> None:
         for channel in list(self.channels.keys()):
@@ -116,5 +119,12 @@ class SocketAPI(Starlette):
         if not channel:
             await self._socket_manager.error(websocket, "Channel is required.")
             return
-        if message_type == "subscribe":
-            await self._socket_manager.subscribe(channel, websocket)
+        match message_type:
+            case "subscribe":
+                await self._socket_manager.subscribe(channel, websocket)
+            case "unsubscribe":
+                await self._socket_manager.unsubscribe(channel, websocket)
+            case _:
+                await self._socket_manager.error(
+                    websocket, f"Unknown message type '{message_type}'."
+                )
