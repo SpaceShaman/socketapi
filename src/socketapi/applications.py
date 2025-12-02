@@ -1,18 +1,39 @@
-from functools import wraps
-from typing import Any, Awaitable, Callable, ParamSpec, Protocol, TypeVar, cast
+from typing import Any, Awaitable, Callable, Generic, ParamSpec, TypeVar
 
 from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 P = ParamSpec("P")
-R = TypeVar("R", covariant=True)
+R = TypeVar("R")
 
 
-class ChannelHandler(Protocol[P, R]):
-    default_response: bool
+class ChannelHandler(Generic[P, R]):
+    def __init__(
+        self,
+        func: Callable[P, Awaitable[R]],
+        channel: str,
+        sockets: set[WebSocket],
+        default_response: bool,
+    ) -> None:
+        self._func = func
+        self._channel = channel
+        self._sockets = sockets
+        self.default_response = default_response
 
-    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R: ...
+    async def __call__(
+        self, websocket: WebSocket | None = None, *args: P.args, **kwargs: P.kwargs
+    ) -> R | None:
+        data = await self._func(*args, **kwargs)
+        if websocket:
+            await self._send_data(websocket, self._channel, data)
+            return data
+        for websocket in self._sockets:
+            await self._send_data(websocket, self._channel, data)
+        return data
+
+    async def _send_data(self, websocket: WebSocket, channel: str, payload: R) -> None:
+        await websocket.send_json({"type": "data", "channel": channel, "data": payload})
 
 
 class ChannelManager:
@@ -42,14 +63,10 @@ class SocketAPI(Starlette):
         self, name: str, default_response: bool = True
     ) -> Callable[[Callable[P, Awaitable[R]]], ChannelHandler[P, R]]:
         def decorator(func: Callable[P, Awaitable[R]]) -> ChannelHandler[P, R]:
-            @wraps(func)
-            async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                result = await func(*args, **kwargs)
-                return result
-
-            handler = cast(ChannelHandler[P, R], wrapper)
-            handler.default_response = default_response
             self.channel_manager.create_channel(name)
+            handler = ChannelHandler(
+                func, name, self.channel_manager.channels[name], default_response
+            )
             self.handlers[name] = handler
             return handler
 
@@ -80,10 +97,4 @@ class SocketAPI(Starlette):
             if handler := self.handlers.get(channel):
                 if not handler.default_response:
                     return
-                default_response = await self.handlers[channel]()
-                await self._send_data(subscripted_ws, channel, default_response)
-
-    async def _send_data(
-        self, websocket: WebSocket, channel: str, payload: dict[str, Any]
-    ) -> None:
-        await websocket.send_json({"type": "data", "channel": channel, "data": payload})
+                await self.handlers[channel](websocket)

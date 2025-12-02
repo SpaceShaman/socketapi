@@ -1,3 +1,5 @@
+import asyncio
+
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
@@ -8,10 +10,10 @@ news_calls: int = 0
 
 
 @app.channel("chat")
-async def chat() -> dict[str, str]:
+async def chat(message: str = "Welcome") -> dict[str, str]:
     global chat_calls
     chat_calls += 1
-    return {"message": "Welcome to the chat channel!"}
+    return {"message": message}
 
 
 @app.channel("news", default_response=False)
@@ -36,7 +38,7 @@ def test_subscribe_to_channel():
         assert response == {
             "type": "data",
             "channel": "chat",
-            "data": {"message": "Welcome to the chat channel!"},
+            "data": {"message": "Welcome"},
         }
     global chat_calls
     assert chat_calls == 1
@@ -61,3 +63,28 @@ def test_subscribe_to_nonexistent_channel():
         websocket.send_json({"type": "subscribe", "channel": "nonexistent"})
         response = websocket.receive_json()
         assert response.get("error") == "Channel 'nonexistent' not found."
+
+
+def test_subscribe_to_channel_and_receive_some_data():
+    client = TestClient(app)
+
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "chat"})
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "chat"}
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "chat",
+            "data": {"message": "Welcome"},
+        }
+        asyncio.run(chat(message="Test Message"))
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "chat",
+            "data": {"message": "Test Message"},
+        }
+    global chat_calls
+    assert chat_calls == 2
+    chat_calls = 0
