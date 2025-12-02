@@ -19,6 +19,7 @@ class SubscriptionManager:
             await websocket.send_json({"error": f"Channel '{channel}' not found."})
             return
         self.channels[channel].add(websocket)
+        await websocket.send_json({"type": "subscribed", "channel": channel})
 
 
 class SocketAPI(Starlette):
