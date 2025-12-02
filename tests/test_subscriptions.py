@@ -4,9 +4,9 @@ from socketapi.testclient import TestClient
 app = SocketAPI()
 
 
-@app.subscribe("chat")
-async def chat():
-    pass
+@app.channel("chat")
+async def chat() -> dict[str, str]:
+    return {"message": "Welcome to the chat channel!"}
 
 
 def test_subscribe_to_channel():
@@ -19,7 +19,11 @@ def test_subscribe_to_channel():
         websocket.send_json({"type": "subscribe", "channel": "chat"})
         assert len(app.subscription_manager.channels["chat"]) == 1
         response = websocket.receive_json()
-        assert response == {"type": "subscribed", "channel": "chat"}
+        assert response == {
+            "type": "subscribed",
+            "channel": "chat",
+            "message": "Welcome to the chat channel!",
+        }
 
 
 def test_subscribe_to_nonexistent_channel():

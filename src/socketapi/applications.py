@@ -19,7 +19,6 @@ class SubscriptionManager:
             await websocket.send_json({"error": f"Channel '{channel}' not found."})
             return
         self.channels[channel].add(websocket)
-        await websocket.send_json({"type": "subscribed", "channel": channel})
 
 
 class SocketAPI(Starlette):
@@ -28,11 +27,9 @@ class SocketAPI(Starlette):
         routes = [WebSocketRoute("/", self._websocket_endpoint)]
         super().__init__(routes=routes)
 
-    def subscribe(
-        self, channel: str
-    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+    def channel(self, name: str) -> Callable[[DecoratedCallable], DecoratedCallable]:
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self.subscription_manager.create_channel(channel)
+            self.subscription_manager.create_channel(name)
             return func
 
         return decorator
