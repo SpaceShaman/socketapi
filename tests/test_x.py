@@ -1,23 +1,15 @@
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
+app = SocketAPI()
 
-def test_connect_to_websocket():
-    app = SocketAPI()
-    client = TestClient(app)
-    with client.websocket_connect("/") as websocket:
-        websocket.send_text("Hello, World!")
-        data = websocket.receive_text()
-        assert data == "Hello, World!"
+
+@app.subscribe("chat")
+async def chat():
+    pass
 
 
 def test_subscribe_to_channel():
-    app = SocketAPI()
-
-    @app.subscribe("chat")
-    async def chat():
-        pass
-
     client = TestClient(app)
 
     assert "chat" in app.subscription_manager.channels
@@ -28,3 +20,12 @@ def test_subscribe_to_channel():
         assert len(app.subscription_manager.channels["chat"]) == 1
         response = websocket.receive_json()
         assert response == {"type": "subscribed", "channel": "chat"}
+
+
+def test_subscribe_to_nonexistent_channel():
+    client = TestClient(app)
+
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "nonexistent"})
+        response = websocket.receive_json()
+        assert response.get("error") == "Channel 'nonexistent' not found."

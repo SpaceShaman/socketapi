@@ -4,21 +4,23 @@ from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from .exceptions import ChannelNotFoundError, InvalidMessageFormatError
+from .exceptions import InvalidMessageFormatError
 from .types import DecoratedCallable
 
 
 class SubscriptionManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.channels: dict[str, set[WebSocket]] = {}
 
-    def create_channel(self, channel: str):
+    def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
 
-    def subscribe(self, channel: str, websocket: WebSocket):
+    async def subscribe(self, channel: str, websocket: WebSocket) -> None:
         if channel not in self.channels:
-            raise ChannelNotFoundError(f"Channel '{channel}' not found.")
+            await websocket.send_json({"error": f"Channel '{channel}' not found."})
+            return
         self.channels[channel].add(websocket)
+        await websocket.send_json({"type": "subscribed", "channel": channel})
 
 
 class SocketAPI(Starlette):
@@ -53,5 +55,4 @@ class SocketAPI(Starlette):
         if not channel:
             raise InvalidMessageFormatError("Channel is required.")
         if message_type == "subscribe":
-            self.subscription_manager.subscribe(channel, websocket)
-            await websocket.send_json({"type": "subscribed", "channel": channel})
+            await self.subscription_manager.subscribe(channel, websocket)
