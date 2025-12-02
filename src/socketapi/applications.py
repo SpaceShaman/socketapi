@@ -125,5 +125,5 @@ class SocketAPI(Starlette):
                 await self._socket_manager.unsubscribe(channel, websocket)
             case _:
                 await self._socket_manager.error(
-                    websocket, f"Unknown message type '{message_type}'."
+                    websocket, f"Unknown message type: {message_type}."
                 )
