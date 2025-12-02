@@ -1,4 +1,5 @@
 # pyright: reportPrivateUsage=false
+
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
