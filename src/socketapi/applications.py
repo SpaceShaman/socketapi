@@ -42,6 +42,7 @@ class ChannelHandler(Generic[P, R]):
 class ChannelManager:
     def __init__(self) -> None:
         self.channels: dict[str, set[WebSocket]] = {}
+        self.handlers: dict[str, ChannelHandler[Any, Any]] = {}
 
     def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
@@ -52,13 +53,13 @@ class ChannelManager:
             return None
         self.channels[channel].add(websocket)
         await websocket.send_json({"type": "subscribed", "channel": channel})
+        await self.handlers[channel].send_initial_data(websocket)
         return websocket
 
 
 class SocketAPI(Starlette):
     def __init__(self) -> None:
         self.channel_manager = ChannelManager()
-        self.handlers: dict[str, ChannelHandler[Any, Any]] = {}
         routes = [WebSocketRoute("/", self._websocket_endpoint)]
         super().__init__(routes=routes)
 
@@ -70,7 +71,7 @@ class SocketAPI(Starlette):
             handler = ChannelHandler(
                 func, name, self.channel_manager.channels[name], default_response
             )
-            self.handlers[name] = handler
+            self.channel_manager.handlers[name] = handler
             return handler
 
         return decorator
@@ -94,7 +95,4 @@ class SocketAPI(Starlette):
             await websocket.send_json({"error": "Channel is required."})
             return
         if message_type == "subscribe":
-            subscribed_socket = await self.channel_manager.subscribe(channel, websocket)
-            if not subscribed_socket:
-                return
-            await self.handlers[channel].send_initial_data(websocket)
+            await self.channel_manager.subscribe(channel, websocket)
