@@ -19,18 +19,21 @@ class ChannelHandler(Generic[P, R]):
         self._func = func
         self._channel = channel
         self._sockets = sockets
-        self.default_response = default_response
+        self._default_response = default_response
 
-    async def __call__(
-        self, websocket: WebSocket | None = None, *args: P.args, **kwargs: P.kwargs
-    ) -> R | None:
+    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
         data = await self._func(*args, **kwargs)
-        if websocket:
-            await self._send_data(websocket, self._channel, data)
-            return data
         for websocket in self._sockets:
             await self._send_data(websocket, self._channel, data)
         return data
+
+    async def send_initial_data(
+        self, websocket: WebSocket, *args: P.args, **kwargs: P.kwargs
+    ) -> None:
+        if not self._default_response:
+            return
+        data = await self._func(*args, **kwargs)
+        await self._send_data(websocket, self._channel, data)
 
     async def _send_data(self, websocket: WebSocket, channel: str, payload: R) -> None:
         await websocket.send_json({"type": "data", "channel": channel, "data": payload})
@@ -43,12 +46,13 @@ class ChannelManager:
     def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
 
-    async def subscribe(self, channel: str, websocket: WebSocket) -> None:
+    async def subscribe(self, channel: str, websocket: WebSocket) -> None | WebSocket:
         if channel not in self.channels:
             await websocket.send_json({"error": f"Channel '{channel}' not found."})
             return None
         self.channels[channel].add(websocket)
         await websocket.send_json({"type": "subscribed", "channel": channel})
+        return websocket
 
 
 class SocketAPI(Starlette):
@@ -90,8 +94,7 @@ class SocketAPI(Starlette):
             await websocket.send_json({"error": "Channel is required."})
             return
         if message_type == "subscribe":
-            await self.channel_manager.subscribe(channel, websocket)
-            if handler := self.handlers.get(channel):
-                if not handler.default_response:
-                    return
-                await self.handlers[channel](websocket)
+            subscribed_socket = await self.channel_manager.subscribe(channel, websocket)
+            if not subscribed_socket:
+                return
+            await self.handlers[channel].send_initial_data(websocket)
