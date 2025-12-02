@@ -26,3 +26,5 @@ def test_subscribe_to_channel():
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
         assert len(app.subscription_manager.channels["chat"]) == 1
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "chat"}

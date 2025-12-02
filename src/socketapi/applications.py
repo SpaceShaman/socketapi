@@ -4,6 +4,7 @@ from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from .exceptions import ChannelNotFoundError, InvalidMessageFormatError
 from .types import DecoratedCallable
 
 
@@ -14,21 +15,17 @@ class SubscriptionManager:
     def create_channel(self, channel: str):
         self.channels[channel] = set()
 
+    def subscribe(self, channel: str, websocket: WebSocket):
+        if channel not in self.channels:
+            raise ChannelNotFoundError(f"Channel '{channel}' not found.")
+        self.channels[channel].add(websocket)
+
 
 class SocketAPI(Starlette):
     def __init__(self) -> None:
         self.subscription_manager = SubscriptionManager()
         routes = [WebSocketRoute("/", self._websocket_endpoint)]
         super().__init__(routes=routes)
-
-    async def _websocket_endpoint(self, websocket: WebSocket):
-        await websocket.accept()
-        try:
-            while True:
-                data = await websocket.receive_text()
-                await websocket.send_text(data)
-        except WebSocketDisconnect:
-            pass
 
     def subscribe(
         self, channel: str
@@ -38,3 +35,23 @@ class SocketAPI(Starlette):
             return func
 
         return decorator
+
+    async def _websocket_endpoint(self, websocket: WebSocket) -> None:
+        await websocket.accept()
+        try:
+            while True:
+                data = await websocket.receive_json()
+                await self._handle_message(websocket, data)
+        except WebSocketDisconnect:
+            pass
+
+    async def _handle_message(self, websocket: WebSocket, data: dict[str, str]) -> None:
+        message_type = data.get("type")
+        if not message_type:
+            raise InvalidMessageFormatError("Message type is required.")
+        channel = data.get("channel")
+        if not channel:
+            raise InvalidMessageFormatError("Channel is required.")
+        if message_type == "subscribe":
+            self.subscription_manager.subscribe(channel, websocket)
+            await websocket.send_json({"type": "subscribed", "channel": channel})
