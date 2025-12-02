@@ -7,8 +7,17 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from .types import DecoratedCallable
 
 
+class SubscriptionManager:
+    def __init__(self):
+        self.channels: dict[str, set[WebSocket]] = {}
+
+    def create_channel(self, channel: str):
+        self.channels[channel] = set()
+
+
 class SocketAPI(Starlette):
     def __init__(self) -> None:
+        self.subscription_manager = SubscriptionManager()
         routes = [WebSocketRoute("/", self._websocket_endpoint)]
         super().__init__(routes=routes)
 
@@ -25,7 +34,7 @@ class SocketAPI(Starlette):
         self, channel: str
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            print(channel)
+            self.subscription_manager.create_channel(channel)
             return func
 
         return decorator

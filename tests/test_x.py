@@ -20,5 +20,9 @@ def test_subscribe_to_channel():
 
     client = TestClient(app)
 
+    assert "chat" in app.subscription_manager.channels
+    assert len(app.subscription_manager.channels["chat"]) == 0
+
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
+        assert len(app.subscription_manager.channels["chat"]) == 1
