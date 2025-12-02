@@ -43,13 +43,12 @@ class ChannelManager:
     def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
 
-    async def subscribe(self, channel: str, websocket: WebSocket) -> WebSocket | None:
+    async def subscribe(self, channel: str, websocket: WebSocket) -> None:
         if channel not in self.channels:
             await websocket.send_json({"error": f"Channel '{channel}' not found."})
             return None
         self.channels[channel].add(websocket)
         await websocket.send_json({"type": "subscribed", "channel": channel})
-        return websocket
 
 
 class SocketAPI(Starlette):
@@ -91,9 +90,7 @@ class SocketAPI(Starlette):
             await websocket.send_json({"error": "Channel is required."})
             return
         if message_type == "subscribe":
-            subscripted_ws = await self.channel_manager.subscribe(channel, websocket)
-            if not subscripted_ws:
-                return
+            await self.channel_manager.subscribe(channel, websocket)
             if handler := self.handlers.get(channel):
                 if not handler.default_response:
                     return
