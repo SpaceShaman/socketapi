@@ -45,12 +45,11 @@ class SocketManager:
         try:
             await websocket.send_json(data)
         except Exception:
-            for sockets in list(self.channels.values()):
-                sockets.discard(websocket)
+            await self.unsubscribe_all(websocket)
 
     async def unsubscribe_all(self, websocket: WebSocket) -> None:
-        for channel in list(self.channels.keys()):
-            await self.unsubscribe(channel, websocket)
+        for sockets in list(self.channels.values()):
+            sockets.discard(websocket)
 
 
 class ChannelHandler(Generic[P, R]):
