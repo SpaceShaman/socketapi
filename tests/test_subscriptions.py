@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 import asyncio
 
 from socketapi import SocketAPI
@@ -27,12 +28,12 @@ def test_subscribe_to_channel():
     global chat_calls
     client = TestClient(app)
 
-    assert "chat" in app.channel_manager.channels
-    assert len(app.channel_manager.channels["chat"]) == 0
+    assert "chat" in app._socket_manager.channels
+    assert len(app._socket_manager.channels["chat"]) == 0
 
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
-        assert len(app.channel_manager.channels["chat"]) == 1
+        assert len(app._socket_manager.channels["chat"]) == 1
         response = websocket.receive_json()
         assert response == {"type": "subscribed", "channel": "chat"}
         response = websocket.receive_json()
