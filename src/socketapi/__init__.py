@@ -1,3 +1,3 @@
-from .applications import SocketAPI
+from .main import SocketAPI
 
 __all__ = ["SocketAPI"]
