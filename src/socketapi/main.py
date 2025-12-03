@@ -23,7 +23,7 @@ class SocketAPI(Starlette):
         def decorator(func: Callable[P, Awaitable[R]]) -> ChannelHandler[P, R]:
             self._socket_manager.create_channel(name)
             handler = ChannelHandler(func, name, self._socket_manager, default_response)
-            self._socket_manager.handlers[name] = handler
+            self._socket_manager.channel_handlers[name] = handler
             return handler
 
         return decorator

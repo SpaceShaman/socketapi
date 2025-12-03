@@ -13,7 +13,7 @@ R = TypeVar("R")
 class SocketManager:
     def __init__(self) -> None:
         self.channels: dict[str, set[WebSocket]] = {}
-        self.handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
+        self.channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
 
     def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
@@ -24,7 +24,7 @@ class SocketManager:
             return None
         self.channels[channel].add(websocket)
         await self.send(websocket, "subscribed", channel)
-        await self.handlers[channel].send_initial_data(websocket)
+        await self.channel_handlers[channel].send_initial_data(websocket)
         return websocket
 
     async def unsubscribe(self, channel: str, websocket: WebSocket) -> None:
