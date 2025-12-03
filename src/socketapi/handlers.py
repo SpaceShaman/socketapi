@@ -38,3 +38,19 @@ class ChannelHandler(Generic[P, R]):
 
     async def _send_data(self, websocket: WebSocket, channel: str, payload: R) -> None:
         await self._socket_manager.send(websocket, "data", channel, payload)
+
+
+class ActionHandler(Generic[P, R]):
+    def __init__(
+        self,
+        func: Callable[P, Awaitable[R]],
+        channel: str,
+        socket_manager: "SocketManager",
+    ) -> None:
+        self._func = func
+        self._channel = channel
+        self._socket_manager = socket_manager
+
+    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        result = await self._func(*args, **kwargs)
+        return result

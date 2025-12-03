@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 from starlette.websockets import WebSocket
 
 if TYPE_CHECKING:
-    from .handlers import ChannelHandler
+    from .handlers import ActionHandler, ChannelHandler
 
 
 P = ParamSpec("P")
@@ -14,6 +14,7 @@ class SocketManager:
     def __init__(self) -> None:
         self.channels: dict[str, set[WebSocket]] = {}
         self.channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
+        self.action_handlers: dict[str, "ActionHandler[Any, Any]"] = {}
 
     def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
@@ -32,10 +33,32 @@ class SocketManager:
             self.channels[channel].discard(websocket)
         await self.send(websocket, "unsubscribed", channel)
 
+    async def action(
+        self, channel: str, websocket: WebSocket, data: dict[str, Any]
+    ) -> None | Any:
+        if channel not in self.action_handlers:
+            await self.error(websocket, f"Action '{channel}' not found.")
+            return None
+        result = await self.action_handlers[channel](**data)
+        await self.send(
+            websocket,
+            "action",
+            channel,
+            result,
+            "completed",
+        )
+
     async def send(
-        self, websocket: WebSocket, type: str, channel: str, data: Any | None = None
+        self,
+        websocket: WebSocket,
+        type: str,
+        channel: str,
+        data: Any | None = None,
+        status: str | None = None,
     ) -> None:
         payload = {"type": type, "channel": channel}
+        if status:
+            payload["status"] = status
         if data:
             payload["data"] = data
         await self._send_json(websocket, payload)

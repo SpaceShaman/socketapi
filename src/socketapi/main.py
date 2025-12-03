@@ -1,10 +1,10 @@
-from typing import Awaitable, Callable, ParamSpec, TypeVar
+from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
 
 from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from .handlers import ChannelHandler
+from .handlers import ActionHandler, ChannelHandler
 from .manager import SocketManager
 
 P = ParamSpec("P")
@@ -28,6 +28,16 @@ class SocketAPI(Starlette):
 
         return decorator
 
+    def action(
+        self, name: str
+    ) -> Callable[[Callable[P, Awaitable[R]]], ActionHandler[P, R]]:
+        def decorator(func: Callable[P, Awaitable[R]]) -> ActionHandler[P, R]:
+            handler = ActionHandler(func, name, self._socket_manager)
+            self._socket_manager.action_handlers[name] = handler
+            return handler
+
+        return decorator
+
     async def _websocket_endpoint(self, websocket: WebSocket) -> None:
         await websocket.accept()
         try:
@@ -37,20 +47,25 @@ class SocketAPI(Starlette):
         except WebSocketDisconnect:
             await self._socket_manager.unsubscribe_all(websocket)
 
-    async def _handle_message(self, websocket: WebSocket, data: dict[str, str]) -> None:
-        message_type = data.get("type")
+    async def _handle_message(
+        self, websocket: WebSocket, message: dict[str, Any]
+    ) -> None:
+        message_type = message.get("type")
         if not message_type:
             await self._socket_manager.error(websocket, "Message type is required.")
             return
-        channel = data.get("channel")
+        channel = message.get("channel")
         if not channel:
             await self._socket_manager.error(websocket, "Channel is required.")
             return
+        data = message.get("data", {})
         match message_type:
             case "subscribe":
                 await self._socket_manager.subscribe(channel, websocket)
             case "unsubscribe":
                 await self._socket_manager.unsubscribe(channel, websocket)
+            case "action":
+                await self._socket_manager.action(channel, websocket, data)
             case _:
                 await self._socket_manager.error(
                     websocket, f"Unknown message type: {message_type}."
