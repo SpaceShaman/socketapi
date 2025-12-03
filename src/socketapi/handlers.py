@@ -52,5 +52,4 @@ class ActionHandler(Generic[P, R]):
         self._socket_manager = socket_manager
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        result = await self._func(*args, **kwargs)
-        return result
+        return await self._func(*args, **kwargs)
