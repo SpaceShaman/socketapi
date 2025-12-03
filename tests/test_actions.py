@@ -2,6 +2,7 @@ from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
+client = TestClient(app)
 
 action_called: int = 0
 action_with_result_called: int = 0
@@ -22,7 +23,6 @@ async def action_with_result(value: int) -> int:
 
 def test_trigger_action():
     global action_called
-    client = TestClient(app)
 
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "action", "channel": "test_action"})
@@ -37,7 +37,7 @@ def test_trigger_action():
 
 def test_trigger_action_with_result():
     global action_with_result_called
-    client = TestClient(app)
+
     with client.websocket_connect("/") as websocket:
         websocket.send_json(
             {"type": "action", "channel": "action_with_result", "data": {"value": 5}}
@@ -50,3 +50,10 @@ def test_trigger_action_with_result():
             "data": 10,
         }
         assert action_with_result_called == 1
+
+
+def test_trigger_nonexistent_action():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "action", "channel": "nonexistent_action"})
+        response = websocket.receive_json()
+        assert response == {"error": "Action 'nonexistent_action' not found."}
