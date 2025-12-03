@@ -5,6 +5,7 @@ from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
+client = TestClient(app)
 
 chat_calls: int = 0
 news_calls: int = 0
@@ -26,8 +27,6 @@ async def news() -> dict[str, str]:
 
 def test_subscribe_to_channel():
     global chat_calls
-    client = TestClient(app)
-
     assert "chat" in app._socket_manager.channels
     assert len(app._socket_manager.channels["chat"]) == 0
 
@@ -48,8 +47,6 @@ def test_subscribe_to_channel():
 
 def test_subscribe_to_channel_without_default_response():
     global news_calls
-    client = TestClient(app)
-
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "news"})
         response = websocket.receive_json()
@@ -58,8 +55,6 @@ def test_subscribe_to_channel_without_default_response():
 
 
 def test_subscribe_to_nonexistent_channel():
-    client = TestClient(app)
-
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "nonexistent"})
         response = websocket.receive_json()
@@ -68,8 +63,6 @@ def test_subscribe_to_nonexistent_channel():
 
 def test_subscribe_to_channel_and_receive_some_data():
     global chat_calls
-    client = TestClient(app)
-
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
         response = websocket.receive_json()

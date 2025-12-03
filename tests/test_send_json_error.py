@@ -6,6 +6,7 @@ from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
+client = TestClient(app)
 
 
 @app.channel("chat", default_response=False)
@@ -14,8 +15,6 @@ async def chat() -> dict[str, str]:
 
 
 def test_send_json_exception_triggers_unsubscribe_all():
-    client = TestClient(app)
-
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
         websocket.receive_json()
@@ -43,8 +42,6 @@ def test_send_json_exception_triggers_unsubscribe_all():
 
 
 def test_send_json_exception_on_subscribe():
-    client = TestClient(app)
-
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
         websocket.receive_json()  # subscribed message
