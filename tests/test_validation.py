@@ -34,6 +34,11 @@ async def action_without_params_type(any_data):  # type: ignore
     return any_data  # type: ignore
 
 
+@app.action("action_with_pydantic_model_return")
+async def action_with_pydantic_model_return(data: DataModel) -> DataModel:
+    return data
+
+
 def test_trigger_first_action_with_bad_parm_type():
     with client.websocket_connect("/") as websocket:
         websocket.send_json(
@@ -121,4 +126,22 @@ def test_trigger_action_without_params_type():
             "channel": "action_without_params_type",
             "status": "completed",
             "data": {"key": "value"},
+        }
+
+
+def test_trigger_action_with_pydantic_model_return():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "action_with_pydantic_model_return",
+                "data": {"data": {"x": 42, "y": "hello"}},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "action_with_pydantic_model_return",
+            "status": "completed",
+            "data": {"x": 42, "y": "hello"},
         }
