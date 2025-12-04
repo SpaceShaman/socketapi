@@ -15,8 +15,10 @@ def validate_data(func: Callable[..., Any], data: dict[str, Any]) -> dict[str, A
 
 def _build_input_model_from_signature(handler: Callable[..., Any]) -> type[BaseModel]:
     sig = inspect.signature(handler)
-    fields = {}
+    fields: dict[str, Any] = {}
     for name, param in sig.parameters.items():
-        ann = param.annotation if param.annotation is not inspect._empty else Any
+        ann = (
+            param.annotation if param.annotation is not inspect.Parameter.empty else Any
+        )
         fields[name] = (ann, ...)
     return create_model("Validator", **fields)

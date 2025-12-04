@@ -20,3 +20,17 @@ def test_trigger_first_action_with_bad_parm_type():
             "type": "error",
             "message": "Invalid parameters for action 'first_action'",
         }
+
+
+def test_trigger_first_action_with_number_as_string():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {"type": "action", "channel": "first_action", "data": {"x": "5"}}
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "first_action",
+            "status": "completed",
+            "data": 6,
+        }
