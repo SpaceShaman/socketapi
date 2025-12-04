@@ -10,7 +10,7 @@ def validate_data(func: Callable[..., Any], data: dict[str, Any]) -> dict[str, A
         model_instance = model_cls(**data)
     except Exception as e:
         raise ValueError(f"Invalid parameters for action '{func.__name__}'") from e
-    return model_instance.model_dump()
+    return {k: getattr(model_instance, k) for k in model_cls.model_fields}
 
 
 def _build_input_model_from_signature(handler: Callable[..., Any]) -> type[BaseModel]:

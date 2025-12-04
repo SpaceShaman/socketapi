@@ -25,6 +25,7 @@ class ComplexDataModel(BaseModel):
 
 @app.action("complex_action")
 async def complex_action(complex_data: ComplexDataModel) -> dict[str, str]:
+    complex_data.a
     return {"test": "success"}
 
 
