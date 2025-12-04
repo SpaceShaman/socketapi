@@ -7,8 +7,8 @@ app = SocketAPI()
 client = TestClient(app)
 
 
-@app.action("first_action")
-async def first_action(x: int) -> int:
+@app.action("simple_action")
+async def simple_action(x: int) -> int:
     return x + 1
 
 
@@ -31,24 +31,24 @@ async def complex_action(complex_data: ComplexDataModel) -> dict[str, str]:
 def test_trigger_first_action_with_bad_parm_type():
     with client.websocket_connect("/") as websocket:
         websocket.send_json(
-            {"type": "action", "channel": "first_action", "data": {"x": "not_an_int"}}
+            {"type": "action", "channel": "simple_action", "data": {"x": "not_an_int"}}
         )
         response = websocket.receive_json()
         assert response == {
             "type": "error",
-            "message": "Invalid parameters for action 'first_action'",
+            "message": "Invalid parameters for action 'simple_action'",
         }
 
 
 def test_trigger_first_action_with_number_as_string():
     with client.websocket_connect("/") as websocket:
         websocket.send_json(
-            {"type": "action", "channel": "first_action", "data": {"x": "5"}}
+            {"type": "action", "channel": "simple_action", "data": {"x": "5"}}
         )
         response = websocket.receive_json()
         assert response == {
             "type": "action",
-            "channel": "first_action",
+            "channel": "simple_action",
             "status": "completed",
             "data": 6,
         }
