@@ -28,6 +28,11 @@ async def complex_action(complex_data: ComplexDataModel) -> dict[str, str]:
     return {"test": "success"}
 
 
+@app.action("action_without_params_type")
+async def action_without_params_type(any_data):  # type: ignore
+    return any_data  # type: ignore
+
+
 def test_trigger_first_action_with_bad_parm_type():
     with client.websocket_connect("/") as websocket:
         websocket.send_json(
@@ -97,4 +102,22 @@ def test_trigger_complex_action_with_incorrect_data():
         assert response == {
             "type": "error",
             "message": "Invalid parameters for action 'complex_action'",
+        }
+
+
+def test_trigger_action_without_params_type():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "action_without_params_type",
+                "data": {"any_data": {"key": "value"}},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "action_without_params_type",
+            "status": "completed",
+            "data": {"key": "value"},
         }
