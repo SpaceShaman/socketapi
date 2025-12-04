@@ -38,7 +38,7 @@ async def action_without_params_type(any_data):  # type: ignore
 
 @app.action("action_with_pydantic_model_return")
 async def action_with_pydantic_model_return(data: DataModel) -> DataModel:
-    return data
+    return DataModel(x=data.x, y=data.y)
 
 
 @app.channel("with_required_params_on_subscribe")
