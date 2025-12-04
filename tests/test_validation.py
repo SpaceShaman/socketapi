@@ -1,6 +1,8 @@
+from typing import Annotated
+
 from pydantic import BaseModel
 
-from socketapi import SocketAPI
+from socketapi import RequiredOnSubscribe, SocketAPI
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
@@ -37,6 +39,13 @@ async def action_without_params_type(any_data):  # type: ignore
 @app.action("action_with_pydantic_model_return")
 async def action_with_pydantic_model_return(data: DataModel) -> DataModel:
     return data
+
+
+@app.channel("with_required_params_on_subscribe")
+async def with_required_params_on_subscribe(
+    token: Annotated[str, RequiredOnSubscribe],
+) -> dict[str, str]:
+    return {"token": token}
 
 
 def test_trigger_first_action_with_bad_parm_type():
@@ -144,4 +153,54 @@ def test_trigger_action_with_pydantic_model_return():
             "channel": "action_with_pydantic_model_return",
             "status": "completed",
             "data": {"x": 42, "y": "hello"},
+        }
+
+
+def test_subscribe_with_required_params_on_subscribe():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "subscribe",
+                "channel": "with_required_params_on_subscribe",
+                "data": {"token": "my_secret_token"},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "subscribed",
+            "channel": "with_required_params_on_subscribe",
+        }
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "with_required_params_on_subscribe",
+            "data": {"token": "my_secret_token"},
+        }
+
+
+def test_subscribe_with_missing_required_params_on_subscribe():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {"type": "subscribe", "channel": "with_required_params_on_subscribe"}
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "error",
+            "message": "Invalid parameters for action 'with_required_params_on_subscribe'",
+        }
+
+
+def test_subscribe_with_incorrect_type_for_required_params():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "subscribe",
+                "channel": "with_required_params_on_subscribe",
+                "data": {"token": 12345},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "error",
+            "message": "Invalid parameters for action 'with_required_params_on_subscribe'",
         }
