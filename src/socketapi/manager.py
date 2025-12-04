@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from starlette.websockets import WebSocket
 
+from socketapi.validation import validate_data
+
 if TYPE_CHECKING:
     from .handlers import ActionHandler, ChannelHandler
 
@@ -39,7 +41,12 @@ class SocketManager:
         if channel not in self.action_handlers:
             await self.error(websocket, f"Action '{channel}' not found.")
             return None
-        result = await self.action_handlers[channel](**data)
+        try:
+            data = validate_data(self.action_handlers[channel].func, data)
+            result = await self.action_handlers[channel](**data)
+        except Exception as e:
+            await self.error(websocket, str(e))
+            return None
         await self.send(
             websocket,
             "action",
@@ -64,7 +71,7 @@ class SocketManager:
         await self._send_json(websocket, payload)
 
     async def error(self, websocket: WebSocket, message: str) -> None:
-        await self._send_json(websocket, {"error": message})
+        await self._send_json(websocket, {"type": "error", "message": message})
 
     async def _send_json(self, websocket: WebSocket, data: dict[str, Any]) -> None:
         try:

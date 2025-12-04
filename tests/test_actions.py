@@ -63,7 +63,10 @@ def test_trigger_nonexistent_action():
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "action", "channel": "nonexistent_action"})
         response = websocket.receive_json()
-        assert response == {"error": "Action 'nonexistent_action' not found."}
+        assert response == {
+            "type": "error",
+            "message": "Action 'nonexistent_action' not found.",
+        }
 
 
 def test_trigger_action_with_multiple_params():

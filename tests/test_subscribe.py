@@ -58,7 +58,11 @@ def test_subscribe_to_nonexistent_channel():
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "nonexistent"})
         response = websocket.receive_json()
-        assert response.get("error") == "Channel 'nonexistent' not found."
+        # assert response.get("error") == "Channel 'nonexistent' not found."
+        assert response == {
+            "type": "error",
+            "message": "Channel 'nonexistent' not found.",
+        }
 
 
 def test_subscribe_to_channel_and_receive_some_data():
