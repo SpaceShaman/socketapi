@@ -85,3 +85,19 @@ def test_trigger_action_with_multiple_params():
             "status": "completed",
             "data": {"a": 10, "b": "test", "c": {"key": 42}},
         }
+
+
+def test_trigger_action_with_missing_params():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "multiple_params_action",
+                "data": {"a": 10, "b": "test"},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "error",
+            "message": "Invalid parameters for action 'multiple_params_action'",
+        }
