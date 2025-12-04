@@ -1,3 +1,5 @@
+from typing import Any
+
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
@@ -19,6 +21,11 @@ async def action_with_result(value: int) -> int:
     global action_with_result_called
     action_with_result_called += 1
     return value * 2
+
+
+@app.action("multiple_params_action")
+async def multiple_params_action(a: int, b: str, c: dict[str, int]) -> dict[str, Any]:
+    return {"a": a, "b": b, "c": c}
 
 
 def test_trigger_action():
@@ -57,3 +64,21 @@ def test_trigger_nonexistent_action():
         websocket.send_json({"type": "action", "channel": "nonexistent_action"})
         response = websocket.receive_json()
         assert response == {"error": "Action 'nonexistent_action' not found."}
+
+
+def test_trigger_action_with_multiple_params():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "multiple_params_action",
+                "data": {"a": 10, "b": "test", "c": {"key": 42}},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "multiple_params_action",
+            "status": "completed",
+            "data": {"a": 10, "b": "test", "c": {"key": 42}},
+        }
