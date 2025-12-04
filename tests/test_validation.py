@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
@@ -8,6 +10,22 @@ client = TestClient(app)
 @app.action("first_action")
 async def first_action(x: int) -> int:
     return x + 1
+
+
+class DataModel(BaseModel):
+    x: int
+    y: str
+
+
+class ComplexDataModel(BaseModel):
+    a: int
+    b: str
+    c: DataModel
+
+
+@app.action("complex_action")
+async def complex_action(complex_data: ComplexDataModel) -> dict[str, str]:
+    return {"test": "success"}
 
 
 def test_trigger_first_action_with_bad_parm_type():
@@ -33,4 +51,50 @@ def test_trigger_first_action_with_number_as_string():
             "channel": "first_action",
             "status": "completed",
             "data": 6,
+        }
+
+
+def test_trigger_complex_action_with_correct_data():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "complex_action",
+                "data": {
+                    "complex_data": {
+                        "a": 10,
+                        "b": "test",
+                        "c": {"x": 1, "y": "value"},
+                    }
+                },
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "complex_action",
+            "status": "completed",
+            "data": {"test": "success"},
+        }
+
+
+def test_trigger_complex_action_with_incorrect_data():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "complex_action",
+                "data": {
+                    "complex_data": {
+                        "a": "not_an_int",
+                        "b": "test",
+                        "c": {"x": 1, "y": "value"},
+                    }
+                },
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "error",
+            "message": "Invalid parameters for action 'complex_action'",
         }
