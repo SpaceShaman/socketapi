@@ -43,12 +43,12 @@ class SocketManager:
             return None
         try:
             data = validate_data(self.action_handlers[channel].func, data)
-            result = await self.action_handlers[channel](**data)
-            if hasattr(result, "model_dump"):
-                result = result.model_dump()
         except Exception as e:
             await self.error(websocket, str(e))
             return None
+        result = await self.action_handlers[channel](**data)
+        if hasattr(result, "model_dump"):
+            result = result.model_dump()
         await self.send(
             websocket,
             "action",
