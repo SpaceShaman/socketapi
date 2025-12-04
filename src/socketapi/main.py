@@ -61,7 +61,7 @@ class SocketAPI(Starlette):
         data = message.get("data", {})
         match message_type:
             case "subscribe":
-                await self._socket_manager.subscribe(channel, websocket)
+                await self._socket_manager.subscribe(channel, websocket, data)
             case "unsubscribe":
                 await self._socket_manager.unsubscribe(channel, websocket)
             case "action":

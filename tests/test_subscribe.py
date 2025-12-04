@@ -1,7 +1,8 @@
 # pyright: reportPrivateUsage=false
 import asyncio
+from typing import Annotated
 
-from socketapi import SocketAPI
+from socketapi import RequiredOnSubscribe, SocketAPI
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
@@ -23,6 +24,13 @@ async def news() -> dict[str, str]:
     global news_calls
     news_calls += 1
     return {"headline": "Breaking News!"}
+
+
+@app.channel("required_params_on_subscribe")
+async def required_params_on_subscribe(
+    required: Annotated[str, RequiredOnSubscribe],
+) -> dict[str, str]:
+    return {"info": required}
 
 
 def test_subscribe_to_channel():
@@ -104,3 +112,25 @@ def test_subscribe_to_channel_without_default_response_and_receive_some_data():
         }
     assert news_calls == 1
     news_calls = 0
+
+
+def test_subscribe_to_channel_with_required_params_on_subscribe():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "subscribe",
+                "channel": "required_params_on_subscribe",
+                "data": {"required": "Some important info"},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "subscribed",
+            "channel": "required_params_on_subscribe",
+        }
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "required_params_on_subscribe",
+            "data": {"info": "Some important info"},
+        }

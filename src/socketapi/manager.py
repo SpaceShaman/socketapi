@@ -21,13 +21,22 @@ class SocketManager:
     def create_channel(self, channel: str) -> None:
         self.channels[channel] = set()
 
-    async def subscribe(self, channel: str, websocket: WebSocket) -> None | WebSocket:
+    async def subscribe(
+        self, channel: str, websocket: WebSocket, data: dict[str, Any]
+    ) -> WebSocket | None:
         if channel not in self.channels:
             await self.error(websocket, f"Channel '{channel}' not found.")
             return None
+        try:
+            data = validate_data(
+                self.channel_handlers[channel].func, data, on_subscribe=True
+            )
+        except Exception as e:
+            await self.error(websocket, str(e))
+            return None
         self.channels[channel].add(websocket)
         await self.send(websocket, "subscribed", channel)
-        await self.channel_handlers[channel].send_initial_data(websocket)
+        await self.channel_handlers[channel].send_initial_data(websocket, **data)
         return websocket
 
     async def unsubscribe(self, channel: str, websocket: WebSocket) -> None:
