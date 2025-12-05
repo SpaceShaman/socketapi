@@ -21,6 +21,14 @@ The main goal of **SocketAPI** is to provide an easy-to-use and flexible framewo
 It uses a **single multiplexed WebSocket connection**, allowing clients to exchange different types of information through **endpoint-like actions** and **channel subscriptions**, defined similarly to routes in [FastAPI](https://fastapi.tiangolo.com/).
 The framework is inspired by both [FastAPI](https://fastapi.tiangolo.com/) and [Phoenix LiveView](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html), combining familiar declarative endpoints with real-time, channel-oriented communication.
 
+## Installation
+
+You can install SocketAPI using pip:
+
+```bash
+pip install socketapi
+```
+
 ## Simple example
 
 ### Server
@@ -106,5 +114,69 @@ All subscribers receive:
 - **Actions** (`@app.action`) - endpoint-like, request-response pattern. Client sends a request and receives a response.
 - **Channels** (`@app.channel`) - pub/sub pattern. Client subscribes to a channel and automatically receives all data emitted to that channel.
 - **Single WebSocket** - all operations (actions, channels) work through a single WebSocket connection multiplexed via the `channel` field.
-
 <!--intro-end-->
+
+## Documentation
+
+The full documentation is available at [spaceshaman.github.io/socketapi/](https://spaceshaman.github.io/socketapi/)
+
+## Features and Roadmap
+
+<!--roadmap-start-->
+- [x] Define actions with request-response pattern
+- [x] Define channels with pub/sub pattern
+- [x] Single multiplexed WebSocket connection
+- [x] Pydantic models for data validation
+- [x] Error handling and validation
+<!--roadmap-end-->
+
+## Changelog
+
+<!--changelog-start-->
+Changes for each release are thoroughly documented in [release notes](https://github.com/SpaceShaman/socketapi/releases)
+<!--changelog-end-->
+
+## Contributing
+
+<!--contributing-start-->
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+I would like to keep the library to be safe as possible, so i would appreciate if you cover any new feature with tests to maintain 100% coverage.
+
+### Install in a development environment
+
+1. First, clone the repository:
+
+    ```bash
+    git clone git@github.com:SpaceShaman/socketapi.git
+    ```
+
+2. Install [uv](https://docs.astral.sh/uv/) if you don't have it:
+
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+3. Create a virtual environment and install the dependencies:
+
+    ```bash
+    cd socketapi
+    uv sync
+    ```
+
+### Run tests
+
+You can run the tests with the following command:
+
+```bash
+uv run pytest
+```
+
+You can also run the tests with coverage:
+```bash
+uv run pytest --cov=socketapi
+```
+<!--contributing-end-->
+
+## License
+
+This project is licensed under the terms of the [MIT license](https://github.com/SpaceShaman/socketapi?tab=MIT-1-ov-file)
