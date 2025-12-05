@@ -1,3 +1,4 @@
 nav:
   - channels.md
   - actions.md
+  - fastapi-integration.md
