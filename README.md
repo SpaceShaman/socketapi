@@ -128,6 +128,10 @@ The full documentation is available at [spaceshaman.github.io/socketapi/](https:
 - [x] Single multiplexed WebSocket connection
 - [x] Pydantic models for data validation
 - [x] Error handling and validation
+- [ ] Broadcasting messages outside server context by calling channel-decorated functions
+- [ ] Error reporting inside decorated handlers with automatic error messages sent to client
+- [ ] Router class for splitting API into multiple files similar to FastAPI
+- [ ] Dependency injection system (like FastAPI)
 <!--roadmap-end-->
 
 ## Changelog
