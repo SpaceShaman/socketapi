@@ -16,5 +16,9 @@
 [![Pydantic](https://img.shields.io/badge/technology-Pydantic-blue?logo=pydantic&logoColor=blue)](https://docs.pydantic.dev)
 [![Pytest](https://img.shields.io/badge/testing-Pytest-red?logo=pytest&logoColor=red)](https://docs.pytest.org/)
 [![Material for MkDocs](https://img.shields.io/badge/docs-Material%20for%20MkDocs-yellow?logo=MaterialForMkDocs&logoColor=yellow)](https://spaceshaman.github.io/socketapi/)
+
+The main goal of **SocketAPI** is to provide an easy-to-use and flexible framework for building [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) APIs using [Python](https://www.python.org/). It leverages the power of [Starlette](https://starlette.dev/) for handling [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) connections and [Pydantic](https://docs.pydantic.dev) for data validation and serialization.
+It uses a **single multiplexed WebSocket connection**, allowing clients to exchange different types of information through **endpoint-like actions**, defined similarly to routes in [FastAPI](https://fastapi.tiangolo.com/).
+The framework is inspired by both [FastAPI](https://fastapi.tiangolo.com/) and [Phoenix LiveView](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html), combining familiar declarative endpoints with real-time, channel-oriented communication.
 <!--intro-end-->
 
