@@ -21,7 +21,7 @@ The main goal of **SocketAPI** is to provide an easy-to-use and flexible framewo
 It uses a **single multiplexed WebSocket connection**, allowing clients to exchange different types of information through **endpoint-like actions** and **channel subscriptions**, defined similarly to routes in [FastAPI](https://fastapi.tiangolo.com/).
 The framework is inspired by both [FastAPI](https://fastapi.tiangolo.com/) and [Phoenix LiveView](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.html), combining familiar declarative endpoints with real-time, channel-oriented communication.
 
-## Simple Example
+## Simple example
 
 ### Server
 
