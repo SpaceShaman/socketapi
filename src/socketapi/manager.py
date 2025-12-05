@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from starlette.websockets import WebSocket
 
@@ -6,10 +6,6 @@ from socketapi.validation import validate_data
 
 if TYPE_CHECKING:
     from .handlers import ActionHandler, ChannelHandler
-
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 class SocketManager:
