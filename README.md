@@ -55,24 +55,50 @@ uvicorn main:app --reload
 
 Connect to the WebSocket endpoint at `ws://localhost:8000/` and exchange JSON messages.
 
-**Calling an action** (request-response pattern):
+#### Calling an action (request-response pattern)
+
+Send:
 ```json
-→ Send: {"type": "action", "channel": "add_numbers", "data": {"a": 5, "b": 3}}
-← Receive: {"type": "action", "channel": "add_numbers", "status": "completed", "data": 8}
+{"type": "action", "channel": "add_numbers", "data": {"a": 5, "b": 3}}
 ```
 
-**Subscribing to a channel** (pub/sub pattern):
+Receive:
 ```json
-→ Send: {"type": "subscribe", "channel": "chat"}
-← Receive: {"type": "subscribed", "channel": "chat"}
-← Receive: {"type": "data", "channel": "chat", "data": {"message": "Welcome"}}
+{"type": "action", "channel": "add_numbers", "status": "completed", "data": 8}
 ```
 
-**Broadcasting to channel subscribers**:
+#### Subscribing to a channel (pub/sub pattern)
+
+Send:
 ```json
-→ Send: {"type": "action", "channel": "send_message", "data": {"message": "Hello everyone!"}}
-← Receive: {"type": "action", "channel": "send_message", "status": "completed"}
-← All subscribers receive: {"type": "data", "channel": "chat", "data": {"message": "Hello everyone!"}}
+{"type": "subscribe", "channel": "chat"}
+```
+
+Receive confirmation:
+```json
+{"type": "subscribed", "channel": "chat"}
+```
+
+Receive initial data:
+```json
+{"type": "data", "channel": "chat", "data": {"message": "Welcome"}}
+```
+
+#### Broadcasting to channel subscribers
+
+Send:
+```json
+{"type": "action", "channel": "send_message", "data": {"message": "Hello everyone!"}}
+```
+
+Receive confirmation:
+```json
+{"type": "action", "channel": "send_message", "status": "completed"}
+```
+
+All subscribers receive:
+```json
+{"type": "data", "channel": "chat", "data": {"message": "Hello everyone!"}}
 ```
 
 **How it works:**
