@@ -1,0 +1,78 @@
+site_name: SocketAPI
+site_url: https://spaceshaman.github.io/socketapi/
+repo_url: https://github.com/SpaceShaman/socketapi
+edit_uri: edit/master/docs/
+repo_name: SpaceShaman/socketapi
+site_description: SocketAPI is a lightweight Python framework for real-time WebSocket APIs, using a single multiplexed connection with endpoint-like actions and channel subscriptions.
+site_author: SpaceShaman
+copyright: The project is released under the MIT license.
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.action.edit
+    - content.action.view
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - navigation.footer
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+plugins:
+  - git-revision-date-localized:
+      type: timeago
+  - git-committers:
+      repository: SpaceShaman/socketapi
+      branch: master
+  - search
+  - include-markdown
+  - awesome-pages
+
+markdown_extensions:
+  - markdown.extensions.footnotes
+  - markdown.extensions.attr_list
+  - markdown.extensions.def_list
+  - markdown.extensions.tables
+  - markdown.extensions.abbr
+  - markdown.extensions.md_in_html
+  - pymdownx.superfences
+  - pymdownx.betterem
+  - pymdownx.details
+  - pymdownx.tasklist
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SpaceShaman/socketapi
+      name: Repository
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/socketapi/
+      name: PyPI package
+    - icon: fontawesome/brands/readme
+      link: https://github.com/SpaceShaman/socketapi?tab=MIT-1-ov-file
+      name: License

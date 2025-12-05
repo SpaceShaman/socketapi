@@ -1,7 +1,7 @@
 [project]
 name = "socketapi"
 version = "0.0.0"
-description = "Lightweight WebSocket framework built on Starlette, featuring typed message handling with Pydantic and a fast channel manager for building reactive, real-time backends."
+description = "SocketAPI is a lightweight Python framework for real-time WebSocket APIs, using a single multiplexed connection with endpoint-like actions and channel subscriptions."
 license = "MIT"
 authors = [
 { name = "SpaceShaman", email = "spaceshaman@tuta.io" }
@@ -10,7 +10,7 @@ readme = "README.md"
 homepage = "https://github.com/SpaceShaman/socketapi"
 documentation = "https://github.com/SpaceShaman/socketapi"
 repository = "https://github.com/SpaceShaman/socketapi"
-kwords = ["websocket", "realtime", "pydantic", "starlette", "channels", "async", "framework", "api"]
+kwords = ["websocket", "realtime", "pydantic", "starlette", "async", "framework", "api"]
 classifiers = [
   "Framework :: Pydantic",
   "Framework :: Pydantic :: 2",
@@ -29,6 +29,13 @@ build-backend = "uv_build"
 dev = [
     "debugpy>=1.8.17",
     "httpx>=0.28.1",
+    "mkdocs-awesome-pages-plugin>=2.10.1",
+    "mkdocs-git-committers-plugin-2>=2.5.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.5.0",
+    "mkdocs-include-markdown-plugin>=7.2.0",
+    "mkdocs-material>=9.7.0",
+    "pygments>=2.19.2",
+    "pymdown-extensions>=10.17.2",
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
 ]
