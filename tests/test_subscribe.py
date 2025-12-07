@@ -2,6 +2,8 @@
 import asyncio
 from typing import Annotated
 
+import pytest
+
 from socketapi import RequiredOnSubscribe, SocketAPI
 from socketapi.testclient import TestClient
 
@@ -134,3 +136,55 @@ def test_subscribe_to_channel_with_required_params_on_subscribe():
             "channel": "required_params_on_subscribe",
             "data": {"info": "Some important info"},
         }
+
+
+def test_multiple_subscribers_to_channel():
+    with client.websocket_connect("/") as ws1, client.websocket_connect("/") as ws2:
+        ws1.send_json({"type": "subscribe", "channel": "chat"})
+        response1 = ws1.receive_json()
+        assert response1 == {"type": "subscribed", "channel": "chat"}
+        response1 = ws1.receive_json()
+        assert response1 == {
+            "type": "data",
+            "channel": "chat",
+            "data": {"message": "Welcome"},
+        }
+
+        ws2.send_json({"type": "subscribe", "channel": "chat"})
+        response2 = ws2.receive_json()
+        assert response2 == {"type": "subscribed", "channel": "chat"}
+        response2 = ws2.receive_json()
+        assert response2 == {
+            "type": "data",
+            "channel": "chat",
+            "data": {"message": "Welcome"},
+        }
+
+        asyncio.run(chat(message="Hello Subscribers"))
+
+        response1 = ws1.receive_json()
+        assert response1 == {
+            "type": "data",
+            "channel": "chat",
+            "data": {"message": "Hello Subscribers"},
+        }
+
+        response2 = ws2.receive_json()
+        assert response2 == {
+            "type": "data",
+            "channel": "chat",
+            "data": {"message": "Hello Subscribers"},
+        }
+
+
+@pytest.mark.asyncio
+async def test_dont_receive_data_if_not_subscribed():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "news"})
+        await chat(message="No Subscribers Here")
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "news"}
+        loop = asyncio.get_running_loop()
+        fut = loop.run_in_executor(None, websocket.receive_json)
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(fut, timeout=0.1)
