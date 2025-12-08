@@ -18,13 +18,14 @@ async def validate_and_execute(
         annotations = _get_annotations(param_type)
         if on_subscribe and RequiredOnSubscribe not in annotations:
             continue
-        # if isinstance(annotations, Depends):
-        if any(isinstance(ann, Depends) for ann in annotations):
-            annotation = next(ann for ann in annotations if isinstance(ann, Depends))
+        dep_annotation = next(
+            (ann for ann in annotations if isinstance(ann, Depends)), None
+        )
+        if dep_annotation:
             data[name] = await validate_and_execute(
-                annotation.dependency, data.get(name, {})
+                dep_annotation.dependency, data.get(name, {})
             )
-            dep_sig = inspect.signature(annotation.dependency)
+            dep_sig = inspect.signature(dep_annotation.dependency)
             param_type = dep_sig.return_annotation
         fields[name] = (param_type, ...)
     model_cls = create_model("Validator", **fields)
