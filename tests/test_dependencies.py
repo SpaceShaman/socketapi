@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from pydantic import BaseModel
+
 from socketapi import Depends, SocketAPI
 from socketapi.testclient import TestClient
 
@@ -28,6 +30,30 @@ async def nested_dependency(
 async def action_with_nested_dependency(
     dep: Annotated[dict[str, str], Depends(nested_dependency)],
 ) -> dict[str, str]:
+    return dep
+
+
+class Address(BaseModel):
+    street: str
+    city: str
+    zip_code: str
+
+
+class ComplexDataModel(BaseModel):
+    name: str
+    value: int
+    address: Address
+
+
+async def complex_data_dependency(complex_data: ComplexDataModel) -> ComplexDataModel:
+    complex_data.value += 10
+    return complex_data
+
+
+@app.action("action_with_complex_data_dependency")
+async def action_with_complex_data_dependency(
+    dep: Annotated[ComplexDataModel, Depends(complex_data_dependency)],
+) -> ComplexDataModel:
     return dep
 
 
@@ -76,4 +102,42 @@ def test_action_with_nested_dependency():
             "channel": "action_with_nested_dependency",
             "status": "completed",
             "data": {"x": "dependency result"},
+        }
+
+
+def test_action_with_complex_data_dependency():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "action_with_complex_data_dependency",
+                "data": {
+                    "dep": {
+                        "complex_data": {
+                            "name": "Test",
+                            "value": 5,
+                            "address": {
+                                "street": "123 Main St",
+                                "city": "Anytown",
+                                "zip_code": "12345",
+                            },
+                        },
+                    },
+                },
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "action_with_complex_data_dependency",
+            "status": "completed",
+            "data": {
+                "name": "Test",
+                "value": 15,
+                "address": {
+                    "street": "123 Main St",
+                    "city": "Anytown",
+                    "zip_code": "12345",
+                },
+            },
         }
