@@ -18,21 +18,22 @@ class SocketManager:
         self.channels[channel] = set()
 
     async def subscribe(
-        self, channel: str, websocket: WebSocket, data: dict[str, Any]
+        self, channel: str, websocket: WebSocket, result: dict[str, Any]
     ) -> WebSocket | None:
-        if channel not in self.channels:
+        handler = self.channel_handlers.get(channel)
+        if not handler:
             await self.error(websocket, f"Channel '{channel}' not found.")
             return None
         try:
-            data = validate_data(
-                self.channel_handlers[channel].func, data, on_subscribe=True
-            )
+            if handler.default_response:
+                result = await validate_data(handler.func, result, on_subscribe=True)
         except Exception as e:
             await self.error(websocket, str(e))
             return None
         self.channels[channel].add(websocket)
         await self.send(websocket, "subscribed", channel)
-        await self.channel_handlers[channel].send_initial_data(websocket, **data)
+        if handler.default_response:
+            await handler.send_initial_data(websocket, result)
         return websocket
 
     async def unsubscribe(self, channel: str, websocket: WebSocket) -> None:
@@ -47,11 +48,10 @@ class SocketManager:
             await self.error(websocket, f"Action '{channel}' not found.")
             return None
         try:
-            data = validate_data(self.action_handlers[channel].func, data)
+            result = await validate_data(self.action_handlers[channel].func, data)
         except Exception as e:
             await self.error(websocket, str(e))
             return None
-        result = await self.action_handlers[channel](**data)
         if hasattr(result, "model_dump"):
             result = result.model_dump()
         await self.send(

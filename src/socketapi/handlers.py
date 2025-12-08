@@ -20,7 +20,7 @@ class ChannelHandler(Generic[P, R]):
         self.func = func
         self._channel = channel
         self._socket_manager = socket_manager
-        self._default_response = default_response
+        self.default_response = default_response
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
         data = await self.func(*args, **kwargs)
@@ -28,13 +28,8 @@ class ChannelHandler(Generic[P, R]):
             await self._send_data(websocket, self._channel, data)
         return data
 
-    async def send_initial_data(
-        self, websocket: WebSocket, *args: P.args, **kwargs: P.kwargs
-    ) -> None:
-        if not self._default_response:
-            return
-        data = await self.func(*args, **kwargs)
-        await self._send_data(websocket, self._channel, data)
+    async def send_initial_data(self, websocket: WebSocket, payload: R) -> None:
+        await self._send_data(websocket, self._channel, payload)
 
     async def _send_data(self, websocket: WebSocket, channel: str, payload: R) -> None:
         await self._socket_manager.send(websocket, "data", channel, payload)
