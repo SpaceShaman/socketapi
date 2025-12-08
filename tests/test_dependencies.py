@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel
 
@@ -55,6 +55,17 @@ async def action_with_complex_data_dependency(
     dep: Annotated[ComplexDataModel, Depends(complex_data_dependency)],
 ) -> ComplexDataModel:
     return dep
+
+
+@app.action("action_with_multiple_dependencies")
+async def action_with_multiple_dependencies(
+    dep1: Annotated[str, Depends(common_dependency)],
+    dep2: Annotated[dict[str, str], Depends(nested_dependency)],
+) -> dict[str, Any]:
+    return {
+        "dep1": dep1,
+        "dep2": dep2,
+    }
 
 
 def test_action_with_dependency():
@@ -139,5 +150,37 @@ def test_action_with_complex_data_dependency():
                     "city": "Anytown",
                     "zip_code": "12345",
                 },
+            },
+        }
+
+
+def test_action_with_multiple_dependencies():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "action_with_multiple_dependencies",
+                "data": {
+                    "dep1": {
+                        "a": 7,
+                        "b": "foo",
+                    },
+                    "dep2": {
+                        "x": {
+                            "a": 21,
+                            "b": "bar",
+                        },
+                    },
+                },
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "action",
+            "channel": "action_with_multiple_dependencies",
+            "status": "completed",
+            "data": {
+                "dep1": "dependency result",
+                "dep2": {"x": "dependency result"},
             },
         }
