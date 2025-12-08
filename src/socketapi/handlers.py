@@ -45,6 +45,3 @@ class ActionHandler(Generic[P, R]):
         self.func = func
         self._channel = channel
         self._socket_manager = socket_manager
-
-    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        return await self.func(*args, **kwargs)
