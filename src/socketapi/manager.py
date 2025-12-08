@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 from starlette.websockets import WebSocket
 
-from socketapi.validation import validate_data
+from socketapi.validation import validate_and_execute
 
 if TYPE_CHECKING:
     from .handlers import ActionHandler, ChannelHandler
@@ -26,7 +26,9 @@ class SocketManager:
             return None
         try:
             if handler.default_response:
-                result = await validate_data(handler.func, result, on_subscribe=True)
+                result = await validate_and_execute(
+                    handler.func, result, on_subscribe=True
+                )
         except Exception as e:
             await self.error(websocket, str(e))
             return None
@@ -48,7 +50,9 @@ class SocketManager:
             await self.error(websocket, f"Action '{channel}' not found.")
             return None
         try:
-            result = await validate_data(self.action_handlers[channel].func, data)
+            result = await validate_and_execute(
+                self.action_handlers[channel].func, data
+            )
         except Exception as e:
             await self.error(websocket, str(e))
             return None
