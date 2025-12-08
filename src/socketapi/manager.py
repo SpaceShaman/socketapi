@@ -19,7 +19,7 @@ class SocketManager:
 
     async def subscribe(
         self, channel: str, websocket: WebSocket, result: dict[str, Any]
-    ) -> WebSocket | None:
+    ) -> None:
         handler = self.channel_handlers.get(channel)
         if not handler:
             await self.error(websocket, f"Channel '{channel}' not found.")
@@ -36,7 +36,6 @@ class SocketManager:
         await self.send(websocket, "subscribed", channel)
         if handler.default_response:
             await handler.send_initial_data(websocket, result)
-        return websocket
 
     async def unsubscribe(self, channel: str, websocket: WebSocket) -> None:
         if channel in self.channels:
@@ -45,7 +44,7 @@ class SocketManager:
 
     async def action(
         self, channel: str, websocket: WebSocket, data: dict[str, Any]
-    ) -> None | Any:
+    ) -> None:
         if channel not in self.action_handlers:
             await self.error(websocket, f"Action '{channel}' not found.")
             return None
