@@ -293,7 +293,7 @@ async def validate_token(token: str) -> dict:
 
 @app.channel("private_updates")
 async def private_updates(
-    auth: Annotated[dict, Depends(validate_token)],
+    auth: Annotated[dict, Depends(validate_token), RequiredOnSubscribe],
     message: str = "Welcome"
 ):
     return {"message": message, "user_id": auth["user_id"]}

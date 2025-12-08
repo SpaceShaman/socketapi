@@ -15,12 +15,14 @@ async def validate_and_execute(
         param_type = (
             param.annotation if param.annotation is not inspect.Parameter.empty else Any
         )
-        annotation = _get_annotation(param_type)
-        if on_subscribe and annotation != RequiredOnSubscribe:
+        annotations = _get_annotations(param_type)
+        if on_subscribe and RequiredOnSubscribe not in annotations:
             continue
-        if isinstance(annotation, Depends):
+        # if isinstance(annotations, Depends):
+        if any(isinstance(ann, Depends) for ann in annotations):
+            annotation = next(ann for ann in annotations if isinstance(ann, Depends))
             data[name] = await validate_and_execute(
-                annotation.dependency, data.get(name, {}), on_subscribe
+                annotation.dependency, data.get(name, {})
             )
             dep_sig = inspect.signature(annotation.dependency)
             param_type = dep_sig.return_annotation
@@ -34,7 +36,7 @@ async def validate_and_execute(
     return await func(**validated)
 
 
-def _get_annotation(param_type: Any) -> Any:
+def _get_annotations(param_type: Any) -> tuple[Any, ...]:
     if annotation := get_args(param_type)[1:]:
-        return annotation[0]
-    return None
+        return annotation
+    return ()

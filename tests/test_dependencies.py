@@ -3,6 +3,7 @@ from typing import Annotated, Any
 from pydantic import BaseModel
 
 from socketapi import Depends, SocketAPI
+from socketapi.annotations import RequiredOnSubscribe
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
@@ -66,6 +67,13 @@ async def action_with_multiple_dependencies(
         "dep1": dep1,
         "dep2": dep2,
     }
+
+
+@app.channel("channel_with_dependency", default_response=True)
+async def channel_with_dependency(
+    dep: Annotated[str, Depends(common_dependency), RequiredOnSubscribe],
+) -> str:
+    return dep
 
 
 def test_action_with_dependency():
@@ -183,4 +191,31 @@ def test_action_with_multiple_dependencies():
                 "dep1": "dependency result",
                 "dep2": {"x": "dependency result"},
             },
+        }
+
+
+def test_channel_with_dependency():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "subscribe",
+                "channel": "channel_with_dependency",
+                "data": {
+                    "dep": {
+                        "a": 55,
+                        "b": "baz",
+                    },
+                },
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "subscribed",
+            "channel": "channel_with_dependency",
+        }
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "channel_with_dependency",
+            "data": "dependency result",
         }
