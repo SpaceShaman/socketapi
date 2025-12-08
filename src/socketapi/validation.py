@@ -18,10 +18,9 @@ async def validate_and_execute(
         annotations = _get_annotations(param_type)
         if on_subscribe and RequiredOnSubscribe not in annotations:
             continue
-        dep_annotation = next(
+        if dep_annotation := next(
             (ann for ann in annotations if isinstance(ann, Depends)), None
-        )
-        if dep_annotation:
+        ):
             data[name] = await validate_and_execute(
                 dep_annotation.dependency, data.get(name, {})
             )
