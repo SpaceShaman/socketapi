@@ -81,3 +81,11 @@ class SocketAPI(Starlette):
             )
             channel["func"].set(handler)
             self._socket_manager.create_channel(name, handler)
+        for name, action in router.actions.items():
+            handler = ActionHandler(
+                action["func"].fn,
+                name,
+                self._socket_manager,
+            )
+            action["func"].set(handler)
+            self._socket_manager.create_action(name, handler)

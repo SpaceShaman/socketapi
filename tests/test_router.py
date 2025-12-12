@@ -10,8 +10,13 @@ router = Router()
 
 
 @router.channel("test_channel")
-async def channel(message: str = "Test Channel") -> dict[str, str]:
+async def chat(message: str = "Test Channel") -> dict[str, str]:
     return {"message": message}
+
+
+@router.action("send_test_message")
+async def send_test_message(message: str) -> None:
+    await chat(message=message)
 
 
 app.include_router(router)
@@ -28,10 +33,36 @@ def test_subscribe_to_channel_from_router():
             "channel": "test_channel",
             "data": {"message": "Test Channel"},
         }
-        asyncio.run(channel(message="Another Message"))
+        asyncio.run(chat(message="Another Message"))
         response = websocket.receive_json()
         assert response == {
             "type": "data",
             "channel": "test_channel",
             "data": {"message": "Another Message"},
+        }
+
+
+def test_action_send_test_message_from_router():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "test_channel"})
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "test_channel"}
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "test_channel",
+            "data": {"message": "Test Channel"},
+        }
+        websocket.send_json(
+            {
+                "type": "action",
+                "channel": "send_test_message",
+                "data": {"message": "Action Message"},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "test_channel",
+            "data": {"message": "Action Message"},
         }

@@ -1,7 +1,7 @@
 from collections.abc import Coroutine
 from typing import Any, Callable, Generic, ParamSpec, TypedDict, TypeVar
 
-from socketapi.handlers import ChannelHandler
+from socketapi.handlers import ActionHandler, ChannelHandler
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -23,9 +23,14 @@ class ChannelDefinition(TypedDict):
     default_response: bool
 
 
+class ActionDefinition(TypedDict):
+    func: FuncRef[Any, Any]
+
+
 class Router:
     def __init__(self):
         self.channels: dict[str, ChannelDefinition] = {}
+        self.actions: dict[str, ActionDefinition] = {}
 
     def channel(
         self, name: str, default_response: bool = True
@@ -41,6 +46,21 @@ class Router:
                 "func": ref,
                 "default_response": default_response,
             }
+            return ref
+
+        return decorator
+
+    def action(
+        self, name: str
+    ) -> Callable[
+        [Callable[P, Coroutine[Any, Any, R]]],
+        ActionHandler[P, R] | Callable[P, Coroutine[Any, Any, R]],
+    ]:
+        def decorator(
+            func: Callable[P, Coroutine[Any, Any, R]],
+        ) -> Callable[P, Coroutine[Any, Any, R]] | ActionHandler[P, R]:
+            ref = FuncRef(func)
+            self.actions[name] = {"func": ref}
             return ref
 
         return decorator
