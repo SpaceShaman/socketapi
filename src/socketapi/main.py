@@ -6,6 +6,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from .handlers import ActionHandler, ChannelHandler
 from .manager import SocketManager
+from .router import Router
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -69,3 +70,14 @@ class SocketAPI(Starlette):
                 await self._socket_manager.error(
                     websocket, f"Unknown message type: {message_type}."
                 )
+
+    def include_router(self, router: Router) -> None:
+        for definition in router.functions:
+            handler = ChannelHandler(
+                definition["func"],
+                definition["name"],
+                self._socket_manager,
+                definition["default_response"],
+            )
+            self._socket_manager.create_channel(definition["name"], handler)
+        router.assign_socket_manager(self._socket_manager)

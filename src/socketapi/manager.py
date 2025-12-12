@@ -11,20 +11,20 @@ if TYPE_CHECKING:
 class SocketManager:
     def __init__(self) -> None:
         self._channels: dict[str, set[WebSocket]] = {}
-        self._channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
-        self._action_handlers: dict[str, "ActionHandler[Any, Any]"] = {}
+        self.channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
+        self.action_handlers: dict[str, "ActionHandler[Any, Any]"] = {}
 
     def create_channel(self, name: str, handler: "ChannelHandler[Any, Any]") -> None:
-        self._channel_handlers[name] = handler
+        self.channel_handlers[name] = handler
         self._channels[name] = set()
 
     def create_action(self, name: str, handler: "ActionHandler[Any, Any]") -> None:
-        self._action_handlers[name] = handler
+        self.action_handlers[name] = handler
 
     async def subscribe(
         self, channel: str, websocket: WebSocket, result: dict[str, Any]
     ) -> None:
-        handler = self._channel_handlers.get(channel)
+        handler = self.channel_handlers.get(channel)
         if not handler:
             await self.error(websocket, f"Channel '{channel}' not found.")
             return None
@@ -49,12 +49,12 @@ class SocketManager:
     async def action(
         self, channel: str, websocket: WebSocket, data: dict[str, Any]
     ) -> None:
-        if channel not in self._action_handlers:
+        if channel not in self.action_handlers:
             await self.error(websocket, f"Action '{channel}' not found.")
             return None
         try:
             result = await validate_and_execute(
-                self._action_handlers[channel].func, data
+                self.action_handlers[channel].func, data
             )
         except Exception as e:
             await self.error(websocket, str(e))
