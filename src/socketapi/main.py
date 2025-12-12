@@ -32,7 +32,7 @@ class SocketAPI(Starlette):
     ) -> Callable[[Callable[P, Awaitable[R]]], ActionHandler[P, R]]:
         def decorator(func: Callable[P, Awaitable[R]]) -> ActionHandler[P, R]:
             handler = ActionHandler(func, name, self._socket_manager)
-            self._socket_manager.action_handlers[name] = handler
+            self._socket_manager.create_action(name, handler)
             return handler
 
         return decorator
