@@ -1,4 +1,5 @@
-from typing import Any, Awaitable, Callable, Generic, ParamSpec, TypedDict, TypeVar
+from collections.abc import Coroutine
+from typing import Any, Callable, Generic, ParamSpec, TypedDict, TypeVar
 
 from socketapi.handlers import ChannelHandler
 
@@ -7,14 +8,14 @@ R = TypeVar("R")
 
 
 class FuncRef(Generic[P, R]):
-    def __init__(self, fn: Callable[P, Awaitable[R]]):
-        self.fn: Callable[P, Awaitable[R]] = fn
+    def __init__(self, fn: Callable[P, Coroutine[Any, Any, R]]) -> None:
+        self.fn: Callable[P, Coroutine[Any, Any, R]] = fn
 
-    def set(self, fn: Callable[P, Awaitable[R]]) -> None:
+    def set(self, fn: Callable[P, Coroutine[Any, Any, R]]) -> None:
         self.fn = fn
 
-    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        return await self.fn(*args, **kwargs)
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Coroutine[Any, Any, R]:
+        return self.fn(*args, **kwargs)
 
 
 class ChannelDefinition(TypedDict):
@@ -29,11 +30,12 @@ class Router:
     def channel(
         self, name: str, default_response: bool = True
     ) -> Callable[
-        [Callable[P, Awaitable[R]]], ChannelHandler[P, R] | Callable[P, Awaitable[R]]
+        [Callable[P, Coroutine[Any, Any, R]]],
+        ChannelHandler[P, R] | Callable[P, Coroutine[Any, Any, R]],
     ]:
         def decorator(
-            func: Callable[P, Awaitable[R]],
-        ) -> Callable[P, Awaitable[R]] | ChannelHandler[P, R]:
+            func: Callable[P, Coroutine[Any, Any, R]],
+        ) -> Callable[P, Coroutine[Any, Any, R]] | ChannelHandler[P, R]:
             ref = FuncRef(func)
             self.channels[name] = {
                 "func": ref,
