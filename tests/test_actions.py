@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from socketapi import SocketAPI
@@ -40,6 +41,7 @@ def test_trigger_action():
             "status": "completed",
         }
         assert action_called == 1
+    action_called = 0
 
 
 def test_trigger_action_with_result():
@@ -101,3 +103,11 @@ def test_trigger_action_with_missing_params():
             "type": "error",
             "message": "Invalid parameters for action 'multiple_params_action'",
         }
+
+
+def test_trigger_action_by_calling_action_handler_directly():
+    global action_called
+    asyncio.run(action())
+
+    assert action_called == 1
+    action_called = 0
