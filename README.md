@@ -129,9 +129,9 @@ The full documentation is available at [spaceshaman.github.io/socketapi/](https:
 - [x] Pydantic models for data validation
 - [x] Error handling and validation
 - [X] Dependency injection system (like FastAPI)
+- [X] Router class for splitting API into multiple files similar to FastAPI
 - [ ] Broadcasting messages outside server context by calling channel-decorated functions
 - [ ] Error reporting inside decorated handlers with automatic error messages sent to client
-- [ ] Router class for splitting API into multiple files similar to FastAPI
 <!--roadmap-end-->
 
 ## Changelog
