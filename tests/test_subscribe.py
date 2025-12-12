@@ -37,12 +37,12 @@ async def required_params_on_subscribe(
 
 def test_subscribe_to_channel():
     global chat_calls
-    assert "chat" in app._socket_manager._channels
-    assert len(app._socket_manager._channels["chat"]) == 0
+    assert "chat" in app._socket_manager.channels
+    assert len(app._socket_manager.channels["chat"]) == 0
 
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
-        assert len(app._socket_manager._channels["chat"]) == 1
+        assert len(app._socket_manager.channels["chat"]) == 1
         response = websocket.receive_json()
         assert response == {"type": "subscribed", "channel": "chat"}
         response = websocket.receive_json()

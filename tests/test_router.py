@@ -1,3 +1,5 @@
+import asyncio
+
 from socketapi import Router, SocketAPI
 from socketapi.testclient import TestClient
 
@@ -8,8 +10,8 @@ router = Router()
 
 
 @router.channel("test_channel")
-async def channel() -> dict[str, str]:
-    return {"message": "Test Channel"}
+async def channel(message: str = "Test Channel") -> dict[str, str]:
+    return {"message": message}
 
 
 app.include_router(router)
@@ -25,4 +27,11 @@ def test_subscribe_to_channel_from_router():
             "type": "data",
             "channel": "test_channel",
             "data": {"message": "Test Channel"},
+        }
+        asyncio.run(channel(message="Another Message"))
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "test_channel",
+            "data": {"message": "Another Message"},
         }

@@ -1,22 +1,30 @@
-from typing import Any, Awaitable, Callable, ParamSpec, TypedDict, TypeVar
+from typing import Any, Awaitable, Callable, Generic, ParamSpec, TypedDict, TypeVar
 
 from socketapi.handlers import ChannelHandler
-from socketapi.manager import SocketManager
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
+class FuncRef(Generic[P, R]):
+    def __init__(self, fn: Callable[P, Awaitable[R]]):
+        self.fn: Callable[P, Awaitable[R]] = fn
+
+    def set(self, fn: Callable[P, Awaitable[R]]) -> None:
+        self.fn = fn
+
+    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        return await self.fn(*args, **kwargs)
+
+
 class ChannelDefinition(TypedDict):
-    name: str
-    func: Callable[..., Awaitable[Any]]
+    func: FuncRef[Any, Any]
     default_response: bool
 
 
 class Router:
     def __init__(self):
-        self.functions: list[ChannelDefinition] = []
-        self._socket_manager: SocketManager | None = None
+        self.channels: dict[str, ChannelDefinition] = {}
 
     def channel(
         self, name: str, default_response: bool = True
@@ -26,14 +34,11 @@ class Router:
         def decorator(
             func: Callable[P, Awaitable[R]],
         ) -> Callable[P, Awaitable[R]] | ChannelHandler[P, R]:
-            self.functions.append(
-                {"name": name, "func": func, "default_response": default_response}
-            )
-            if self._socket_manager:
-                return self._socket_manager.channel_handlers[name]
-            return func
+            ref = FuncRef(func)
+            self.channels[name] = {
+                "func": ref,
+                "default_response": default_response,
+            }
+            return ref
 
         return decorator
-
-    def assign_socket_manager(self, socket_manager: SocketManager) -> None:
-        self._socket_manager = socket_manager

@@ -72,12 +72,12 @@ class SocketAPI(Starlette):
                 )
 
     def include_router(self, router: Router) -> None:
-        for definition in router.functions:
+        for name, channel in router.channels.items():
             handler = ChannelHandler(
-                definition["func"],
-                definition["name"],
+                channel["func"].fn,
+                name,
                 self._socket_manager,
-                definition["default_response"],
+                channel["default_response"],
             )
-            self._socket_manager.create_channel(definition["name"], handler)
-        router.assign_socket_manager(self._socket_manager)
+            channel["func"].set(handler)
+            self._socket_manager.create_channel(name, handler)
