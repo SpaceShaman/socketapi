@@ -14,8 +14,9 @@ class SocketManager:
         self.channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
         self.action_handlers: dict[str, "ActionHandler[Any, Any]"] = {}
 
-    def create_channel(self, channel: str) -> None:
-        self.channels[channel] = set()
+    def create_channel(self, name: str, handler: "ChannelHandler[Any, Any]") -> None:
+        self.channel_handlers[name] = handler
+        self.channels[name] = set()
 
     async def subscribe(
         self, channel: str, websocket: WebSocket, result: dict[str, Any]
