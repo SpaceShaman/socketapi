@@ -10,21 +10,21 @@ if TYPE_CHECKING:
 
 class SocketManager:
     def __init__(self) -> None:
-        self.channels: dict[str, set[WebSocket]] = {}
-        self.channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
-        self.action_handlers: dict[str, "ActionHandler[Any, Any]"] = {}
+        self._channels: dict[str, set[WebSocket]] = {}
+        self._channel_handlers: dict[str, "ChannelHandler[Any, Any]"] = {}
+        self._action_handlers: dict[str, "ActionHandler[Any, Any]"] = {}
 
     def create_channel(self, name: str, handler: "ChannelHandler[Any, Any]") -> None:
-        self.channel_handlers[name] = handler
-        self.channels[name] = set()
+        self._channel_handlers[name] = handler
+        self._channels[name] = set()
 
     def create_action(self, name: str, handler: "ActionHandler[Any, Any]") -> None:
-        self.action_handlers[name] = handler
+        self._action_handlers[name] = handler
 
     async def subscribe(
         self, channel: str, websocket: WebSocket, result: dict[str, Any]
     ) -> None:
-        handler = self.channel_handlers.get(channel)
+        handler = self._channel_handlers.get(channel)
         if not handler:
             await self.error(websocket, f"Channel '{channel}' not found.")
             return None
@@ -36,25 +36,25 @@ class SocketManager:
         except Exception as e:
             await self.error(websocket, str(e))
             return None
-        self.channels[channel].add(websocket)
+        self._channels[channel].add(websocket)
         await self.send(websocket, "subscribed", channel)
         if handler.default_response:
             await handler.send_initial_data(websocket, result)
 
     async def unsubscribe(self, channel: str, websocket: WebSocket) -> None:
-        if channel in self.channels:
-            self.channels[channel].discard(websocket)
+        if channel in self._channels:
+            self._channels[channel].discard(websocket)
         await self.send(websocket, "unsubscribed", channel)
 
     async def action(
         self, channel: str, websocket: WebSocket, data: dict[str, Any]
     ) -> None:
-        if channel not in self.action_handlers:
+        if channel not in self._action_handlers:
             await self.error(websocket, f"Action '{channel}' not found.")
             return None
         try:
             result = await validate_and_execute(
-                self.action_handlers[channel].func, data
+                self._action_handlers[channel].func, data
             )
         except Exception as e:
             await self.error(websocket, str(e))
@@ -94,5 +94,5 @@ class SocketManager:
             await self.unsubscribe_all(websocket)
 
     async def unsubscribe_all(self, websocket: WebSocket) -> None:
-        for sockets in list(self.channels.values()):
+        for sockets in list(self._channels.values()):
             sockets.discard(websocket)

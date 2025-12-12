@@ -24,7 +24,7 @@ class ChannelHandler(Generic[P, R]):
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
         data = await self.func(*args, **kwargs)
-        for websocket in list(self._socket_manager.channels[self._channel]):
+        for websocket in list(self._socket_manager._channels[self._channel]):
             await self._send_data(websocket, self._channel, data)
         return data
 
