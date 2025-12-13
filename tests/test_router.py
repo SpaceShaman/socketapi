@@ -23,46 +23,48 @@ app.include_router(router)
 
 
 def test_subscribe_to_channel_from_router():
-    with client.websocket_connect("/") as websocket:
-        websocket.send_json({"type": "subscribe", "channel": "test_channel"})
-        response = websocket.receive_json()
-        assert response == {"type": "subscribed", "channel": "test_channel"}
-        response = websocket.receive_json()
-        assert response == {
-            "type": "data",
-            "channel": "test_channel",
-            "data": {"message": "Test Channel"},
-        }
-        asyncio.run(chat(message="Another Message"))
-        response = websocket.receive_json()
-        assert response == {
-            "type": "data",
-            "channel": "test_channel",
-            "data": {"message": "Another Message"},
-        }
+    with client:
+        with client.websocket_connect("/") as websocket:
+            websocket.send_json({"type": "subscribe", "channel": "test_channel"})
+            response = websocket.receive_json()
+            assert response == {"type": "subscribed", "channel": "test_channel"}
+            response = websocket.receive_json()
+            assert response == {
+                "type": "data",
+                "channel": "test_channel",
+                "data": {"message": "Test Channel"},
+            }
+            asyncio.run(chat(message="Another Message"))
+            response = websocket.receive_json()
+            assert response == {
+                "type": "data",
+                "channel": "test_channel",
+                "data": {"message": "Another Message"},
+            }
 
 
 def test_action_send_test_message_from_router():
-    with client.websocket_connect("/") as websocket:
-        websocket.send_json({"type": "subscribe", "channel": "test_channel"})
-        response = websocket.receive_json()
-        assert response == {"type": "subscribed", "channel": "test_channel"}
-        response = websocket.receive_json()
-        assert response == {
-            "type": "data",
-            "channel": "test_channel",
-            "data": {"message": "Test Channel"},
-        }
-        websocket.send_json(
-            {
-                "type": "action",
-                "channel": "send_test_message",
+    with client:
+        with client.websocket_connect("/") as websocket:
+            websocket.send_json({"type": "subscribe", "channel": "test_channel"})
+            response = websocket.receive_json()
+            assert response == {"type": "subscribed", "channel": "test_channel"}
+            response = websocket.receive_json()
+            assert response == {
+                "type": "data",
+                "channel": "test_channel",
+                "data": {"message": "Test Channel"},
+            }
+            websocket.send_json(
+                {
+                    "type": "action",
+                    "channel": "send_test_message",
+                    "data": {"message": "Action Message"},
+                }
+            )
+            response = websocket.receive_json()
+            assert response == {
+                "type": "data",
+                "channel": "test_channel",
                 "data": {"message": "Action Message"},
             }
-        )
-        response = websocket.receive_json()
-        assert response == {
-            "type": "data",
-            "channel": "test_channel",
-            "data": {"message": "Action Message"},
-        }

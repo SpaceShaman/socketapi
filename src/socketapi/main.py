@@ -106,6 +106,7 @@ class SocketAPI(Starlette):
                 name,
                 self._socket_manager,
                 channel["default_response"],
+                self,
             )
             channel["func"].set(handler)
             self._socket_manager.create_channel(name, handler)

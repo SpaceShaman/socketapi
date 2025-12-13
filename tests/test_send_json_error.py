@@ -15,30 +15,31 @@ async def chat() -> dict[str, str]:
 
 
 def test_send_json_exception_triggers_unsubscribe_all():
-    with client.websocket_connect("/") as websocket:
-        websocket.send_json({"type": "subscribe", "channel": "chat"})
-        websocket.receive_json()
+    with client:
+        with client.websocket_connect("/") as websocket:
+            websocket.send_json({"type": "subscribe", "channel": "chat"})
+            websocket.receive_json()
 
-        # Verify websocket is subscribed
-        assert len(app._socket_manager.channels["chat"]) == 1
+            # Verify websocket is subscribed
+            assert len(app._socket_manager.channels["chat"]) == 1
 
-        # Get the server-side websocket object
-        server_websocket = list(app._socket_manager.channels["chat"])[0]
+            # Get the server-side websocket object
+            server_websocket = list(app._socket_manager.channels["chat"])[0]
 
-        # Mock send_json on server-side websocket to raise an exception
-        original_send_json = server_websocket.send_json
-        server_websocket.send_json = AsyncMock(
-            side_effect=RuntimeError("Connection error")
-        )
+            # Mock send_json on server-side websocket to raise an exception
+            original_send_json = server_websocket.send_json
+            server_websocket.send_json = AsyncMock(
+                side_effect=RuntimeError("Connection error")
+            )
 
-        # Trigger send_json through chat() which will call _send_data -> send -> _send_json
-        asyncio.run(chat())
+            # Trigger send_json through chat() which will call _send_data -> send -> _send_json
+            asyncio.run(chat())
 
-        # The exception in _send_json should trigger unsubscribe_all
-        assert len(app._socket_manager.channels["chat"]) == 0
+            # The exception in _send_json should trigger unsubscribe_all
+            assert len(app._socket_manager.channels["chat"]) == 0
 
-        # Restore original method
-        server_websocket.send_json = original_send_json
+            # Restore original method
+            server_websocket.send_json = original_send_json
 
 
 def test_send_json_exception_on_subscribe():

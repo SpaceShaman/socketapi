@@ -86,7 +86,8 @@ def test_subscribe_to_channel_and_receive_some_data():
             "channel": "chat",
             "data": {"message": "Welcome"},
         }
-        asyncio.run(chat(message="Test Message"))
+        with client:
+            asyncio.run(chat(message="Test Message"))
         response = websocket.receive_json()
         assert response == {
             "type": "data",
@@ -105,7 +106,8 @@ def test_subscribe_to_channel_without_default_response_and_receive_some_data():
         websocket.send_json({"type": "subscribe", "channel": "news"})
         response = websocket.receive_json()
         assert response == {"type": "subscribed", "channel": "news"}
-        asyncio.run(news())
+        with client:
+            asyncio.run(news())
         response = websocket.receive_json()
         assert response == {
             "type": "data",
@@ -160,7 +162,8 @@ def test_multiple_subscribers_to_channel():
             "data": {"message": "Welcome"},
         }
 
-        asyncio.run(chat(message="Hello Subscribers"))
+        with client:
+            asyncio.run(chat(message="Hello Subscribers"))
 
         response1 = ws1.receive_json()
         assert response1 == {
@@ -181,7 +184,8 @@ def test_multiple_subscribers_to_channel():
 async def test_dont_receive_data_if_not_subscribed():
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "news"})
-        await chat(message="No Subscribers Here")
+        with client:
+            await chat(message="No Subscribers Here")
         response = websocket.receive_json()
         assert response == {"type": "subscribed", "channel": "news"}
         loop = asyncio.get_running_loop()
