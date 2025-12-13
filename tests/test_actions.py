@@ -1,5 +1,6 @@
-import asyncio
 from typing import Any
+
+import pytest
 
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
@@ -105,9 +106,10 @@ def test_trigger_action_with_missing_params():
         }
 
 
-def test_trigger_action_by_calling_action_handler_directly():
+@pytest.mark.asyncio
+async def test_trigger_action_by_calling_action_handler_directly():
     global action_called
-    asyncio.run(action())
+    await action()
 
     assert action_called == 1
     action_called = 0

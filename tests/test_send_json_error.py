@@ -1,6 +1,7 @@
 # pyright: reportPrivateUsage=false
-import asyncio
 from unittest.mock import AsyncMock
+
+import pytest
 
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
@@ -14,35 +15,37 @@ async def chat() -> dict[str, str]:
     return {"message": "Welcome"}
 
 
-def test_send_json_exception_triggers_unsubscribe_all():
-    with client:
-        with client.websocket_connect("/") as websocket:
-            websocket.send_json({"type": "subscribe", "channel": "chat"})
-            websocket.receive_json()
+@pytest.mark.asyncio
+async def test_send_json_exception_triggers_unsubscribe_all():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "chat"})
+        websocket.receive_json()
 
-            # Verify websocket is subscribed
-            assert len(app._socket_manager.channels["chat"]) == 1
+        # Verify websocket is subscribed
+        assert len(app._socket_manager.channels["chat"]) == 1
 
-            # Get the server-side websocket object
-            server_websocket = list(app._socket_manager.channels["chat"])[0]
+        # Get the server-side websocket object
+        server_websocket = list(app._socket_manager.channels["chat"])[0]
 
-            # Mock send_json on server-side websocket to raise an exception
-            original_send_json = server_websocket.send_json
-            server_websocket.send_json = AsyncMock(
-                side_effect=RuntimeError("Connection error")
-            )
+        # Mock send_json on server-side websocket to raise an exception
+        original_send_json = server_websocket.send_json
+        server_websocket.send_json = AsyncMock(
+            side_effect=RuntimeError("Connection error")
+        )
 
-            # Trigger send_json through chat() which will call _send_data -> send -> _send_json
-            asyncio.run(chat())
+        # Trigger send_json through chat() which will call _send_data -> send -> _send_json
+        with client:
+            await chat()
 
-            # The exception in _send_json should trigger unsubscribe_all
-            assert len(app._socket_manager.channels["chat"]) == 0
+        # The exception in _send_json should trigger unsubscribe_all
+        assert len(app._socket_manager.channels["chat"]) == 0
 
-            # Restore original method
-            server_websocket.send_json = original_send_json
+        # Restore original method
+        server_websocket.send_json = original_send_json
 
 
-def test_send_json_exception_on_subscribe():
+@pytest.mark.asyncio
+async def test_send_json_exception_on_subscribe():
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "chat"})
         websocket.receive_json()  # subscribed message
@@ -57,7 +60,7 @@ def test_send_json_exception_on_subscribe():
         )
 
         # Try to send error message - this will trigger exception in _send_json
-        asyncio.run(app._socket_manager.error(server_websocket, "Test error"))
+        await app._socket_manager.error(server_websocket, "Test error")
 
         # Should trigger unsubscribe_all
         assert len(app._socket_manager.channels["chat"]) == 0

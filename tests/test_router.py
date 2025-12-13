@@ -1,4 +1,4 @@
-import asyncio
+import pytest
 
 from socketapi import Router, SocketAPI
 from socketapi.testclient import TestClient
@@ -22,25 +22,26 @@ async def send_test_message(message: str) -> None:
 app.include_router(router)
 
 
-def test_subscribe_to_channel_from_router():
-    with client:
-        with client.websocket_connect("/") as websocket:
-            websocket.send_json({"type": "subscribe", "channel": "test_channel"})
-            response = websocket.receive_json()
-            assert response == {"type": "subscribed", "channel": "test_channel"}
-            response = websocket.receive_json()
-            assert response == {
-                "type": "data",
-                "channel": "test_channel",
-                "data": {"message": "Test Channel"},
-            }
-            asyncio.run(chat(message="Another Message"))
-            response = websocket.receive_json()
-            assert response == {
-                "type": "data",
-                "channel": "test_channel",
-                "data": {"message": "Another Message"},
-            }
+@pytest.mark.asyncio
+async def test_subscribe_to_channel_from_router():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "test_channel"})
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "test_channel"}
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "test_channel",
+            "data": {"message": "Test Channel"},
+        }
+        with client:
+            await chat(message="Another Message")
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "test_channel",
+            "data": {"message": "Another Message"},
+        }
 
 
 def test_action_send_test_message_from_router():
