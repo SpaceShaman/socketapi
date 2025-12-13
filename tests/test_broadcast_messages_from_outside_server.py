@@ -1,14 +1,13 @@
-import json
-import multiprocessing
-from time import sleep
+from unittest.mock import patch
 
 import pytest
 import uvicorn
-import websockets
 
 from socketapi import SocketAPI
+from socketapi.testclient import TestClient
 
 app = SocketAPI()
+client = TestClient(app)
 
 
 @app.channel("broadcast_channel", default_response=False)
@@ -21,28 +20,22 @@ def run_server():
 
 
 @pytest.mark.asyncio
-async def test_broadcast_messages_from_outside_server_context():
-    server_process = multiprocessing.Process(target=run_server)
-    server_process.start()
-    sleep(1)  # Give the server time to start
+async def test_broadcast_with_mocked_client():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json({"type": "subscribe", "channel": "broadcast_channel"})
+        response = websocket.receive_json()
+        assert response == {"type": "subscribed", "channel": "broadcast_channel"}
 
-    uri = "ws://localhost:8000/"
-    try:
-        async with websockets.connect(uri) as websocket:
-            await websocket.send(
-                json.dumps({"type": "subscribe", "channel": "broadcast_channel"})
-            )
-            response = json.loads(await websocket.recv())
-            assert response == {"type": "subscribed", "channel": "broadcast_channel"}
-            await broadcast_channel(message="Hello from outside!")
-            response = json.loads(await websocket.recv())
-            assert response == {
-                "type": "data",
-                "channel": "broadcast_channel",
-                "data": {"message": "Hello from outside!"},
-            }
-    finally:
-        server_process.terminate()
-        server_process.join(timeout=5)
-        if server_process.is_alive():
-            server_process.kill()
+        app.server_started = False
+
+        with patch("socketapi.handlers.httpx.Client", return_value=client):
+            await broadcast_channel(message="Hello from mocked client!")
+
+        app.server_started = True
+
+        response = websocket.receive_json()
+        assert response == {
+            "type": "data",
+            "channel": "broadcast_channel",
+            "data": {"message": "Hello from mocked client!"},
+        }

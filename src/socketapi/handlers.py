@@ -28,8 +28,8 @@ class ChannelHandler(Generic[P, R]):
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
         if not self._app.server_started:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
+            with httpx.Client() as client:
+                response = client.post(
                     "http://localhost:8000/_broadcast",
                     json={
                         "channel": self._channel,
