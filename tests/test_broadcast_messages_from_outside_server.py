@@ -28,7 +28,7 @@ async def test_broadcast_with_mocked_client():
 
         app.server_started = False
 
-        with patch("socketapi.handlers.httpx.Client", return_value=client):
+        with patch("socketapi.handlers.Client", return_value=client):
             await broadcast_channel(message="Hello from mocked client!")
 
         app.server_started = True

@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING, Awaitable, Callable, Generic, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Generic, ParamSpec, TypeVar
 
-import httpx
+from httpx import Client
 from starlette.websockets import WebSocket
 
 if TYPE_CHECKING:
@@ -28,15 +28,7 @@ class ChannelHandler(Generic[P, R]):
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
         if not self._app.server_started:
-            with httpx.Client() as client:
-                response = client.post(
-                    "http://localhost:8000/_broadcast",
-                    json={
-                        "channel": self._channel,
-                        "data": {**kwargs},
-                    },
-                )
-                response.raise_for_status()
+            _broadcast_message_from_outside_server(self._channel, {**kwargs})
             return None
         data = await self.func(*args, **kwargs)
         for websocket in list(self._socket_manager.channels[self._channel]):
@@ -63,3 +55,15 @@ class ActionHandler(Generic[P, R]):
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         return await self.func(*args, **kwargs)
+
+
+def _broadcast_message_from_outside_server(channel: str, data: dict[str, Any]) -> None:
+    with Client() as client:
+        response = client.post(
+            "http://localhost:8000/_broadcast",
+            json={
+                "channel": channel,
+                "data": data,
+            },
+        )
+        response.raise_for_status()
