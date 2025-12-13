@@ -20,7 +20,7 @@ def run_server():
 
 
 @pytest.mark.asyncio
-async def test_broadcast_with_mocked_client():
+async def test_broadcast_messages_from_outside_server():
     with client.websocket_connect("/") as websocket:
         websocket.send_json({"type": "subscribe", "channel": "broadcast_channel"})
         response = websocket.receive_json()
