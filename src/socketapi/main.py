@@ -1,7 +1,10 @@
-from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator, Awaitable, Callable, ParamSpec, TypeVar
 
 from starlette.applications import Starlette
-from starlette.routing import WebSocketRoute
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.routing import Route, WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from .handlers import ActionHandler, ChannelHandler
@@ -15,14 +18,26 @@ R = TypeVar("R")
 class SocketAPI(Starlette):
     def __init__(self) -> None:
         self._socket_manager = SocketManager()
-        routes = [WebSocketRoute("/", self._websocket_endpoint)]
-        super().__init__(routes=routes)
+        self.server_started = False
+        routes = [
+            WebSocketRoute("/", self._websocket_endpoint),
+            Route("/_broadcast", self._broadcast_endpoint, methods=["POST"]),
+        ]
+        super().__init__(routes=routes, lifespan=self._lifespan)
+
+    @asynccontextmanager
+    async def _lifespan(self, app: "SocketAPI") -> AsyncGenerator[None, None]:
+        self.server_started = True
+        yield
+        self.server_started = False
 
     def channel(
         self, name: str, default_response: bool = True
     ) -> Callable[[Callable[P, Awaitable[R]]], ChannelHandler[P, R]]:
         def decorator(func: Callable[P, Awaitable[R]]) -> ChannelHandler[P, R]:
-            handler = ChannelHandler(func, name, self._socket_manager, default_response)
+            handler = ChannelHandler(
+                func, name, self._socket_manager, default_response, self
+            )
             self._socket_manager.create_channel(name, handler)
             return handler
 
@@ -37,6 +52,19 @@ class SocketAPI(Starlette):
             return handler
 
         return decorator
+
+    async def _broadcast_endpoint(self, request: Request) -> JSONResponse:
+        payload = await request.json()
+        channel = payload.get("channel")
+        data = payload.get("data", {})
+
+        handler = self._socket_manager.channel_handlers.get(channel)
+        if not handler:
+            return JSONResponse(
+                {"error": f"Channel '{channel}' not found."}, status_code=404
+            )
+        await handler(**data)
+        return JSONResponse({"status": "success"})
 
     async def _websocket_endpoint(self, websocket: WebSocket) -> None:
         await websocket.accept()

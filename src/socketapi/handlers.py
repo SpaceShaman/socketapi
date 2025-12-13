@@ -1,8 +1,10 @@
 from typing import TYPE_CHECKING, Awaitable, Callable, Generic, ParamSpec, TypeVar
 
+import httpx
 from starlette.websockets import WebSocket
 
 if TYPE_CHECKING:
+    from .main import SocketAPI
     from .manager import SocketManager
 
 P = ParamSpec("P")
@@ -16,13 +18,26 @@ class ChannelHandler(Generic[P, R]):
         channel: str,
         socket_manager: "SocketManager",
         default_response: bool,
+        app: "SocketAPI",
     ) -> None:
         self.func = func
         self._channel = channel
         self._socket_manager = socket_manager
+        self._app = app
         self.default_response = default_response
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
+        if not self._app.server_started:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "http://localhost:8000/_broadcast",
+                    json={
+                        "channel": self._channel,
+                        "data": {**kwargs},
+                    },
+                )
+                response.raise_for_status()
+            return None
         data = await self.func(*args, **kwargs)
         for websocket in list(self._socket_manager.channels[self._channel]):
             await self._send_data(websocket, self._channel, data)
