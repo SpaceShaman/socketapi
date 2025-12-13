@@ -209,6 +209,48 @@ Receive:
 }
 ```
 
+## Broadcasting from Outside Server Context
+
+One of the most powerful features of SocketAPI channels is the ability to call channel functions from **outside the server context** - even from different processes or threads. This makes it incredibly useful for integrating with other technologies that run in separate processes.
+
+### Use Cases
+
+- **Background tasks**: Celery workers, RQ jobs, or other task queues
+- **Database triggers**: PostgreSQL NOTIFY/LISTEN or other database events
+- **External services**: Webhooks, message queues (RabbitMQ, Redis), or third-party APIs
+- **Scheduled jobs**: Cron jobs or APScheduler tasks
+- **Separate processes**: Any Python process that has access to your SocketAPI app instance
+
+### How It Works
+
+Channel functions work seamlessly regardless of where they're called from. When called from outside the WebSocket request context, SocketAPI automatically handles broadcasting to all subscribed clients.
+
+```python
+from socketapi import SocketAPI
+
+app = SocketAPI()
+
+@app.channel("broadcast_channel", default_response=False)
+async def broadcast_channel(message: str):
+    return {"message": message}
+
+# This works from anywhere - inside actions, background tasks, or external processes
+async def external_process():
+    # Call from a completely different context
+    await broadcast_channel(message="Hello from external process!")
+```
+
+
+### Important Notes
+
+- Channel functions are **thread-safe** and **process-safe**
+- No special configuration needed - it just works!
+- All subscribed clients receive broadcasts regardless of where the function is called
+- Parameters are validated the same way as when called from actions
+- Works with both sync and async contexts
+
+This feature makes SocketAPI perfect for building real-time applications that need to integrate with existing infrastructure and external services.
+
 ## Complete Example
 
 ```python
