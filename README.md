@@ -5,7 +5,7 @@
 
 <!--intro-start-->
 [![GitHub License](https://img.shields.io/github/license/SpaceShaman/socketapi)](https://github.com/SpaceShaman/socketapi?tab=MIT-1-ov-file)
-[![Tests](https://img.shields.io/github/actions/workflow/status/SpaceShaman/socketapi/release.yml?label=tests)](https://github.com/SpaceShaman/socketapi/blob/master/.github/workflows/tests.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/SpaceShaman/socketapi/publish.yml?label=tests)](https://github.com/SpaceShaman/socketapi/blob/master/.github/workflows/tests.yml)
 [![Codecov](https://img.shields.io/codecov/c/github/SpaceShaman/socketapi)](https://codecov.io/gh/SpaceShaman/socketapi)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/socketapi)](https://pypi.org/project/socketapi)
 [![PyPI - Version](https://img.shields.io/pypi/v/socketapi)](https://pypi.org/project/socketapi)
