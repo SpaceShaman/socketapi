@@ -16,7 +16,9 @@ R = TypeVar("R")
 
 
 class SocketAPI(Starlette):
-    def __init__(self) -> None:
+    def __init__(self, host: str = "localhost", port: int = 8000) -> None:
+        self.server_host = host
+        self.server_port = port
         self._socket_manager = SocketManager()
         self.server_started = False
         routes = [

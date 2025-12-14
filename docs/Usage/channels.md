@@ -224,6 +224,21 @@ async def external_process():
 ```
 
 
+### Custom Host and Port Configuration
+
+If the server is running on a different host than `localhost` or a different port than `8000`, you need to provide these details when creating the SocketAPI object so that other processes know the server address and can communicate with it:
+
+```python
+from socketapi import SocketAPI
+
+# Server running on custom host and/or port
+app = SocketAPI(host="192.168.1.100", port=9000)
+
+# Now external processes can broadcast to this server
+```
+
+If the server is running on the default host (`localhost`) and port (`8000`), no additional configuration is needed.
+
 ### Important Notes
 
 - Channel functions are **thread-safe** and **process-safe**

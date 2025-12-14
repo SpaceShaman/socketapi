@@ -28,7 +28,9 @@ class ChannelHandler(Generic[P, R]):
 
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R | None:
         if not self._app.server_started:
-            _broadcast_message_from_outside_server(self._channel, {**kwargs})
+            _broadcast_message_from_outside_server(
+                self._app.server_host, self._app.server_port, self._channel, {**kwargs}
+            )
             return None
         data = await self.func(*args, **kwargs)
         for websocket in list(self._socket_manager.channels[self._channel]):
@@ -57,10 +59,12 @@ class ActionHandler(Generic[P, R]):
         return await self.func(*args, **kwargs)
 
 
-def _broadcast_message_from_outside_server(channel: str, data: dict[str, Any]) -> None:
+def _broadcast_message_from_outside_server(
+    host: str, port: int, channel: str, data: dict[str, Any]
+) -> None:
     with Client() as client:
         response = client.post(
-            "http://localhost:8000/_broadcast",
+            f"http://{host}:{port}/_broadcast",
             json={
                 "channel": channel,
                 "data": data,
