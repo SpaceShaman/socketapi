@@ -30,10 +30,7 @@ Receive confirmation:
 {"type": "subscribed", "channel": "chat"}
 ```
 
-By default, clients automatically receive initial data after subscribing:
-```json
-{"type": "data", "channel": "chat", "data": {"message": "Welcome"}}
-```
+By default, clients do **not** receive initial data automatically after subscribing. They only receive the confirmation message. To enable automatic initial data delivery, use `default_response=True`.
 
 ## Unsubscribing from a Channel
 
@@ -73,10 +70,10 @@ All subscribers will receive:
 
 ## Default Response Behavior
 
-By default, channels send initial data immediately after a client subscribes. You can disable this behavior:
+By default, channels do **not** send initial data immediately after a client subscribes. You can enable this behavior by setting `default_response=True`:
 
 ```python
-@app.channel("news", default_response=False)
+@app.channel("news", default_response=True)
 async def news_channel():
     return {"headline": "Breaking News!"}
 ```
@@ -86,17 +83,10 @@ Send:
 {"type": "subscribe", "channel": "news"}
 ```
 
-Receive only confirmation (no initial data):
+Receive confirmation and initial data:
 ```json
 {"type": "subscribed", "channel": "news"}
-```
-
-The client will only receive data when you explicitly call the channel function:
-
-```python
-@app.action("publish_news")
-async def publish_news():
-    await news_channel()  # Now all subscribers receive the data
+{"type": "data", "channel": "news", "data": {"headline": "Breaking News!"}}
 ```
 
 ## Parameters and Validation
@@ -151,14 +141,7 @@ Receive:
 {"type": "subscribed", "channel": "private_chat"}
 ```
 
-Then receive initial data:
-```json
-{
-    "type": "data",
-    "channel": "private_chat",
-    "data": {"message": "Welcome", "authenticated": true}
-}
-```
+**Note:** By default, no initial data is sent automatically. To receive initial data after subscribing, set `default_response=True` on the channel decorator.
 
 If required parameters are missing or invalid:
 
@@ -230,7 +213,7 @@ from socketapi import SocketAPI
 
 app = SocketAPI()
 
-@app.channel("broadcast_channel", default_response=False)
+@app.channel("broadcast_channel")
 async def broadcast_channel(message: str):
     return {"message": message}
 
@@ -281,10 +264,9 @@ Client workflow:
 {"type": "subscribe", "channel": "notifications", "data": {"user_id": 123}}
 ```
 
-2. Receive confirmation and initial data:
+2. Receive confirmation (no initial data by default):
 ```json
 {"type": "subscribed", "channel": "notifications"}
-{"type": "data", "channel": "notifications", "data": {"user_id": 123, "type": "all", "notifications": []}}
 ```
 
 3. Receive broadcasts when `send_notification` is called:
