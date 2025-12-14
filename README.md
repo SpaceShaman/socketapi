@@ -87,11 +87,6 @@ Receive confirmation:
 {"type": "subscribed", "channel": "chat"}
 ```
 
-Receive initial data:
-```json
-{"type": "data", "channel": "chat", "data": {"message": "Welcome"}}
-```
-
 #### Broadcasting to channel subscribers
 
 Send:
@@ -130,7 +125,7 @@ The full documentation is available at [spaceshaman.github.io/socketapi/](https:
 - [x] Error handling and validation
 - [X] Dependency injection system (like FastAPI)
 - [X] Router class for splitting API into multiple files similar to FastAPI
-- [ ] Broadcasting messages from outside the server context by calling channel-decorated functions
+- [X] Broadcasting messages from outside the server context by calling channel-decorated functions
 - [ ] Error reporting inside decorated handlers with automatic error messages sent to client
 <!--roadmap-end-->
 
