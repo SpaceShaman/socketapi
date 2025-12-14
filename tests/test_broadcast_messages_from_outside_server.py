@@ -10,8 +10,8 @@ app = SocketAPI()
 client = TestClient(app)
 
 
-@app.channel("broadcast_channel", default_response=False)
-async def broadcast_channel(message: str) -> dict[str, str]:
+@app.channel("broadcast_channel")
+async def broadcast_channel(message: str = "") -> dict[str, str]:
     return {"message": message}
 
 

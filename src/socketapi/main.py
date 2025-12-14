@@ -32,7 +32,7 @@ class SocketAPI(Starlette):
         self.server_started = False
 
     def channel(
-        self, name: str, default_response: bool = True
+        self, name: str, default_response: bool = False
     ) -> Callable[[Callable[P, Awaitable[R]]], ChannelHandler[P, R]]:
         def decorator(func: Callable[P, Awaitable[R]]) -> ChannelHandler[P, R]:
             handler = ChannelHandler(

@@ -170,12 +170,6 @@ def test_subscribe_with_required_params_on_subscribe():
             "type": "subscribed",
             "channel": "with_required_params_on_subscribe",
         }
-        response = websocket.receive_json()
-        assert response == {
-            "type": "data",
-            "channel": "with_required_params_on_subscribe",
-            "data": {"token": "my_secret_token"},
-        }
 
 
 def test_subscribe_with_missing_required_params_on_subscribe():

@@ -29,10 +29,7 @@ class SocketManager:
             await self.error(websocket, f"Channel '{channel}' not found.")
             return None
         try:
-            if handler.default_response:
-                result = await validate_and_execute(
-                    handler.func, result, on_subscribe=True
-                )
+            result = await validate_and_execute(handler.func, result, on_subscribe=True)
         except Exception as e:
             await self.error(websocket, str(e))
             return None

@@ -8,11 +8,10 @@ app = SocketAPI()
 chat_calls: int = 0
 
 
-@app.channel("chat", default_response=False)
-async def chat() -> dict[str, str]:
+@app.channel("chat")
+async def chat() -> None:
     global chat_calls
     chat_calls += 1
-    return {"message": "Welcome"}
 
 
 def test_unsubscribe_from_channel():
@@ -32,5 +31,5 @@ def test_unsubscribe_from_channel():
         response = websocket.receive_json()
         assert response == {"type": "unsubscribed", "channel": "chat"}
         assert len(app._socket_manager.channels["chat"]) == 0
-    assert chat_calls == 0
+    assert chat_calls == 1
     chat_calls = 0
