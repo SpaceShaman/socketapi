@@ -3,3 +3,4 @@ nav:
   - actions.md
   - routers.md
   - dependencies.md
+  - testing.md
