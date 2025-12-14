@@ -126,7 +126,7 @@ The full documentation is available at [spaceshaman.github.io/socketapi/](https:
 - [X] Dependency injection system (like FastAPI)
 - [X] Router class for splitting API into multiple files similar to FastAPI
 - [X] Broadcasting messages from outside the server context by calling channel-decorated functions
-- [ ] Error reporting inside decorated handlers with automatic error messages sent to client
+- [X] Error reporting inside decorated handlers with automatic error messages sent to client
 <!--roadmap-end-->
 
 ## Changelog

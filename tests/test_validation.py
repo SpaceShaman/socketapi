@@ -45,7 +45,9 @@ async def action_with_pydantic_model_return(data: DataModel) -> DataModel:
 async def with_required_params_on_subscribe(
     token: Annotated[str, RequiredOnSubscribe],
 ) -> dict[str, str]:
-    return {"token": token}
+    if token == "correct_token":
+        return {"token": token}
+    raise ValueError("Invalid token")
 
 
 def test_trigger_first_action_with_bad_parm_type():
@@ -162,13 +164,29 @@ def test_subscribe_with_required_params_on_subscribe():
             {
                 "type": "subscribe",
                 "channel": "with_required_params_on_subscribe",
-                "data": {"token": "my_secret_token"},
+                "data": {"token": "correct_token"},
             }
         )
         response = websocket.receive_json()
         assert response == {
             "type": "subscribed",
             "channel": "with_required_params_on_subscribe",
+        }
+
+
+def test_subscribe_with_incorrect_token_on_subscribe():
+    with client.websocket_connect("/") as websocket:
+        websocket.send_json(
+            {
+                "type": "subscribe",
+                "channel": "with_required_params_on_subscribe",
+                "data": {"token": "wrong_token"},
+            }
+        )
+        response = websocket.receive_json()
+        assert response == {
+            "type": "error",
+            "message": "Invalid token",
         }
 
 
