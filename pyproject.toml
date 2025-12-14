@@ -1,6 +1,6 @@
 [project]
 name = "socketapi"
-version = "0.0.0"
+version = "0.1.0"
 description = "SocketAPI is a lightweight Python framework for real-time WebSocket APIs, using a single multiplexed connection with endpoint-like actions and channel subscriptions."
 license = "MIT"
 authors = [
@@ -15,7 +15,7 @@ classifiers = [
   "Framework :: Pydantic",
   "Framework :: Pydantic :: 2",
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.12.5",

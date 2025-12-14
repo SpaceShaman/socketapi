@@ -1,4 +1,4 @@
-name: "Publish"
+name: Publish
 
 on:
   push:
@@ -7,8 +7,11 @@ on:
       - v*
 
 jobs:
-  run:
-    runs-on: ubuntu-latest
+  tests:
+    uses: ./.github/workflows/tests.yml
+  publish:
+    runs-on: ubuntu-22.04
+    needs: tests
     environment:
       name: pypi
     permissions:
