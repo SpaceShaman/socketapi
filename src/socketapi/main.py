@@ -57,12 +57,7 @@ class SocketAPI(Starlette):
         payload = await request.json()
         channel = payload.get("channel")
         data = payload.get("data", {})
-
-        handler = self._socket_manager.channel_handlers.get(channel)
-        if not handler:
-            return JSONResponse(
-                {"error": f"Channel '{channel}' not found."}, status_code=404
-            )
+        handler = self._socket_manager.channel_handlers[channel]
         await handler(**data)
         return JSONResponse({"status": "success"})
 
