@@ -56,6 +56,15 @@ class SocketAPI(Starlette):
         return decorator
 
     async def _broadcast_endpoint(self, request: Request) -> JSONResponse:
+        if request.client and request.client.host not in [
+            "127.0.0.1",
+            "::1",
+            "localhost",
+        ]:
+            return JSONResponse(
+                {"error": "Broadcast endpoint can only be accessed locally."},
+                status_code=403,
+            )
         payload = await request.json()
         channel = payload.get("channel")
         data = payload.get("data", {})

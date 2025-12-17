@@ -1,22 +1,33 @@
 from unittest.mock import patch
 
 import pytest
-import uvicorn
 
 from socketapi import SocketAPI
 from socketapi.testclient import TestClient
 
 app = SocketAPI()
-client = TestClient(app)
+
+
+class FakeClientMiddleware:
+    def __init__(self, app: SocketAPI, host: str, port: int):
+        self.app = app
+        self.host = host
+        self.port = port
+
+    async def __call__(self, scope, receive, send):  # type: ignore
+        if scope["type"] in {"http", "websocket"}:
+            scope["client"] = (self.host, self.port)
+        await self.app(scope, receive, send)  # type: ignore
+
+
+app.add_middleware(FakeClientMiddleware, host="localhost", port=8000)  # type: ignore
+
+client = TestClient(app, base_url="localhost")
 
 
 @app.channel("broadcast_channel")
 async def broadcast_channel(message: str = "") -> dict[str, str]:
     return {"message": message}
-
-
-def run_server():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 @pytest.mark.asyncio
