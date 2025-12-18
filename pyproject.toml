@@ -1,6 +1,6 @@
 [project]
 name = "socketapi"
-version = "0.1.2"
+version = "0.2.0"
 description = "SocketAPI is a lightweight Python framework for real-time WebSocket APIs, using a single multiplexed connection with endpoint-like actions and channel subscriptions."
 license = "MIT"
 authors = [
