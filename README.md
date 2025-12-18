@@ -127,6 +127,8 @@ The full documentation is available at [spaceshaman.github.io/socketapi/](https:
 - [X] Router class for splitting API into multiple files similar to FastAPI
 - [X] Broadcasting messages from outside the server context by calling channel-decorated functions
 - [X] Error reporting inside decorated handlers with automatic error messages sent to client
+- [ ] Dynamic channel paths with parameter extraction (e.g., chat/{room_id}) with automatic mapping to channel handler arguments
+- [ ] JavaScript/TypeScript client library for easier integration with web applications
 <!--roadmap-end-->
 
 ## Changelog
