@@ -245,7 +245,6 @@ If the server is running on the default host (`localhost`) and port (`8000`), no
 - No special configuration needed - it just works!
 - All subscribed clients receive broadcasts regardless of where the function is called
 - Parameters are validated the same way as when called from actions
-- Works with both sync and async contexts
 
 !!! note "Broadcasting from a Different Machine"
     By default, the broadcast endpoint only accepts connections from localhost (`127.0.0.1`, `::1`, `localhost`) for security reasons. If you need to call channel functions from a different machine or server, you must explicitly configure `broadcast_allowed_hosts` when creating the SocketAPI instance:
