@@ -16,9 +16,19 @@ R = TypeVar("R")
 
 
 class SocketAPI(Starlette):
-    def __init__(self, host: str = "localhost", port: int = 8000) -> None:
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 8000,
+        broadcast_allowed_hosts: tuple[str, ...] = (
+            "127.0.0.1",
+            "::1",
+            "localhost",
+        ),
+    ):
         self.server_host = host
         self.server_port = port
+        self.broadcast_allowed_hosts = broadcast_allowed_hosts
         self._socket_manager = SocketManager()
         self.server_started = False
         routes = [
@@ -56,11 +66,7 @@ class SocketAPI(Starlette):
         return decorator
 
     async def _broadcast_endpoint(self, request: Request) -> JSONResponse:
-        if request.client and request.client.host not in [
-            "127.0.0.1",
-            "::1",
-            "localhost",
-        ]:
+        if request.client and request.client.host not in self.broadcast_allowed_hosts:
             return JSONResponse(
                 {"error": "Broadcast endpoint can only be accessed locally."},
                 status_code=403,
