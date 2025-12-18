@@ -247,6 +247,19 @@ If the server is running on the default host (`localhost`) and port (`8000`), no
 - Parameters are validated the same way as when called from actions
 - Works with both sync and async contexts
 
+!!! note "Broadcasting from a Different Machine"
+    By default, the broadcast endpoint only accepts connections from localhost (`127.0.0.1`, `::1`, `localhost`) for security reasons. If you need to call channel functions from a different machine or server, you must explicitly configure `broadcast_allowed_hosts` when creating the SocketAPI instance:
+    
+    ```python
+    app = SocketAPI(
+        host="0.0.0.0",
+        port=8000,
+        broadcast_allowed_hosts=("127.0.0.1", "::1", "localhost", "192.168.1.50")
+    )
+    ```
+    
+    Add the IP address of the machine that needs to communicate with the server to the `broadcast_allowed_hosts` tuple.
+
 This feature makes SocketAPI perfect for building real-time applications that need to integrate with existing infrastructure and external services.
 
 ## Complete Example
